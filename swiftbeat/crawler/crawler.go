@@ -7,18 +7,18 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 	//"github.com/elastic/beats/swiftbeat/input/file"
-	//"github.com/elastic/beats/swiftbeat/prospector"
+	"github.com/elastic/beats/swiftbeat/prospector"
 	//"github.com/elastic/beats/swiftbeat/spooler"
 )
 
 type Crawler struct {
-	//prospectors       []*prospector.Prospector
+	prospectors       []*prospector.Prospector
 	prospectorConfigs []*common.Config
 	//spooler           *spooler.Spooler
 	wg sync.WaitGroup
 }
 
-// TODO //
+// TODO
 //func New(spooler *spooler.Spooler, prospectorConfigs []*common.Config) (*Crawler, error) {
 func New(prospectorConfigs []*common.Config) (*Crawler, error) {
 
@@ -32,36 +32,38 @@ func New(prospectorConfigs []*common.Config) (*Crawler, error) {
 	}, nil
 }
 
-// TODO //
+// TODO
 //func (c *Crawler) Start(states file.States) error {
 func (c *Crawler) Start() error {
 
 	logp.Info("Loading Prospectors: %v", len(c.prospectorConfigs))
 
 	// Prospect the globs/paths given on the command line and launch harvesters
-	//for _, prospectorConfig := range c.prospectorConfigs {
+	for _, prospectorConfig := range c.prospectorConfigs {
 
-	//prospector, err := prospector.NewProspector(prospectorConfig, states, c.spooler.Channel)
-	//if err != nil {
-	//return fmt.Errorf("Error in initing prospector: %s", err)
-	//}
-	//c.prospectors = append(c.prospectors, prospector)
-	//}
+		// TODO
+		//prospector, err := prospector.NewProspector(prospectorConfig, states, c.spooler.Channel)
+		prospector, err := prospector.NewProspector(prospectorConfig)
+		if err != nil {
+			return fmt.Errorf("Error in initing prospector: %s", err)
+		}
+		c.prospectors = append(c.prospectors, prospector)
+	}
 
-	//logp.Info("Loading Prospectors completed. Number of prospectors: %v", len(c.prospectors))
+	logp.Info("Loading Prospectors completed. Number of prospectors: %v", len(c.prospectors))
 
-	//for i, p := range c.prospectors {
-	//c.wg.Add(1)
+	for i, p := range c.prospectors {
+		c.wg.Add(1)
 
-	//go func(id int, prospector *prospector.Prospector) {
-	//defer func() {
-	//c.wg.Done()
-	//logp.Debug("crawler", "Prospector %v stopped", id)
-	//}()
-	//logp.Debug("crawler", "Starting prospector %v", id)
-	//prospector.Run()
-	//}(i, p)
-	//}
+		go func(id int, prospector *prospector.Prospector) {
+			defer func() {
+				c.wg.Done()
+				logp.Debug("crawler", "Prospector %v stopped", id)
+			}()
+			logp.Debug("crawler", "Starting prospector %v", id)
+			prospector.Run()
+		}(i, p)
+	}
 
 	//logp.Info("All prospectors are initialised and running with %d states to persist", states.Count())
 
@@ -70,17 +72,17 @@ func (c *Crawler) Start() error {
 
 func (c *Crawler) Stop() {
 	logp.Info("Stopping Crawler")
-	//stopProspector := func(p *prospector.Prospector) {
-	//defer c.wg.Done()
-	//p.Stop()
-	//}
+	stopProspector := func(p *prospector.Prospector) {
+		defer c.wg.Done()
+		p.Stop()
+	}
 
-	//logp.Info("Stopping %v prospectors", len(c.prospectors))
-	//for _, p := range c.prospectors {
-	// Stop prospectors in parallel
-	//c.wg.Add(1)
-	//go stopProspector(p)
-	//}
+	logp.Info("Stopping %v prospectors", len(c.prospectors))
+	for _, p := range c.prospectors {
+		// Stop prospectors in parallel
+		c.wg.Add(1)
+		go stopProspector(p)
+	}
 	c.wg.Wait()
 	logp.Info("Crawler stopped")
 }

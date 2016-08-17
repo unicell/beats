@@ -65,7 +65,7 @@ func (sb *Swiftbeat) Run(b *beat.Beat) error {
 
 	//logp.Err("Could not init crawler: %v", config.Prospectors)
 	//logp.Debug("prospector", "File Configs: %v", config.Prospectors[0].config.Paths)
-	// TODO //
+	// TODO
 	crawler, err := crawler.New(config.Prospectors)
 	//crawler, err := crawler.New(spooler, config.Prospectors)
 	if err != nil {
@@ -95,7 +95,7 @@ func (sb *Swiftbeat) Run(b *beat.Beat) error {
 	// Stopping spooler will flush items
 	//defer spooler.Stop()
 
-	// TODO //
+	// TODO
 	//err = crawler.Start(registrar.GetStates())
 	err = crawler.Start()
 	if err != nil {
