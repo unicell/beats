@@ -165,7 +165,6 @@ func (p *ProspectorDisk) scan() {
 			continue
 		}
 
-		p.layout.Init()
 		p.layout.BuildIndex()
 	}
 

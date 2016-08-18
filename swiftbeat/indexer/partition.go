@@ -1,11 +1,11 @@
 package indexer
 
 import (
-//"io/ioutil"
-//"os"
-//"path/filepath"
-//"time"
-//"github.com/elastic/beats/libbeat/logp"
+	"io/ioutil"
+	"path/filepath"
+	"sort"
+
+	"github.com/elastic/beats/libbeat/logp"
 )
 
 type Partition struct {
@@ -28,24 +28,46 @@ func (parts PartitionSorter) Swap(i, j int) {
 	parts[i], parts[j] = parts[j], parts[i]
 }
 
-//func (p *Partition) init() {
-//logp.debug("indexer")
-//}
+func (p *Partition) init() {
+	path := p.path
+	logp.Debug("partition", "Init partition layout: %s", path)
 
+	var suffixes SuffixSorter
+
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		logp.Err("list dir(%s) failed: %v", path, err)
+		return
+	}
+
+	for _, file := range files {
+		if !file.IsDir() {
+			continue
+		}
+
+		suffix := Suffix{
+			IndexRecord: &IndexRecord{
+				path:  filepath.Join(path, file.Name()),
+				mtime: file.ModTime(),
+			},
+			hashes: []Hash{},
+		}
+		suffixes = append(suffixes, suffix)
+	}
+
+	sort.Sort(suffixes)
+	p.suffixes = suffixes
+}
+
+// BuildIndex builds index for one partition
+// TODO: move away from naive linear scanning to better strategy
 func (p *Partition) BuildIndex() {
-	//logp.debug("indexer")
-}
 
-type Suffix struct {
-	*IndexRecord
-	// todo: hashes.pkl
-	//suffixes []suffix
-}
+	// load suffix list for the partition
+	p.init()
 
-//func (p *Suffix) init() {
-//logp.debug("indexer")
-//}
-
-func (p *Suffix) BuildIndex() {
-	//logp.debug("indexer")
+	for _, suffix := range p.suffixes {
+		logp.Debug("suffix", "Build index for suffix: %s", suffix.path)
+		suffix.BuildIndex()
+	}
 }

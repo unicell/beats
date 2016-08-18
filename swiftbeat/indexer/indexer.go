@@ -102,6 +102,7 @@ func initResource(layout *Layout, resource string) {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		logp.Err("list dir(%s) failed: %v", path, err)
+		return
 	}
 
 	for _, file := range files {
@@ -130,9 +131,7 @@ func initResource(layout *Layout, resource string) {
 	}
 }
 
-// Init loads partition info for top level resources: accounts, containers,
-// objects
-func (l *Layout) Init() {
+func (l *Layout) init() {
 	initResource(l, "accounts")
 	initResource(l, "containers")
 	initResource(l, "objects")
@@ -140,18 +139,22 @@ func (l *Layout) Init() {
 
 // BuildIndex triggers index build recursively on all top level resources
 func (l *Layout) BuildIndex() {
+
+	// load partition list for top level resources
+	l.init()
+
 	// TODO
 	//l.accounts.BuildIndex()
 	//l.containers.BuildIndex()
 	l.objects.BuildIndex()
 }
 
-// BuildIndex triggers index build iteratively for all partitions
-// Also update timestamps on itself
+// BuildIndex builds index iteratively for all partitions
 func (rl *ResourceLayout) BuildIndex() {
 	logp.Debug("indexer", "Build index for resource: %s", rl.resourceType)
 
 	for _, part := range rl.partitions {
-		logp.Debug("indexer", "Build index for partition: %s", part.path)
+		logp.Debug("partition", "Build index for partition: %s", part.path)
+		part.BuildIndex()
 	}
 }

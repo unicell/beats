@@ -67,7 +67,7 @@ func (p *Prospector) Init() error {
 
 	switch p.config.ResourceType {
 	case cfg.ObjectResourceType:
-		prospectorer, err = NewProspectorLog(p)
+		prospectorer, err = NewProspectorDisk(p)
 	default:
 		return fmt.Errorf("Invalid input type: %v", p.config.ResourceType)
 	}
