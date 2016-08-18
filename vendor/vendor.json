@@ -1,0 +1,19 @@
+{
+	"comment": "",
+	"ignore": "",
+	"package": [
+		{
+			"checksumSHA1": "Uz2/YPnqTZ0R2Mc8BlYyq/X8kOk=",
+			"path": "github.com/hydrogen18/stalecucumber",
+			"revision": "44fa6fe7eaeeacdef466943f1e0a455f19a2bccc",
+			"revisionTime": "2016-08-18T02:24:30Z"
+		},
+		{
+			"checksumSHA1": "srMHdJNWZStYkjKNakiFwB+Oer8=",
+			"path": "github.com/hydrogen18/stalecucumber/struct_export_test",
+			"revision": "44fa6fe7eaeeacdef466943f1e0a455f19a2bccc",
+			"revisionTime": "2016-08-18T02:24:30Z"
+		}
+	],
+	"rootPath": "github.com/elastic/beats"
+}
