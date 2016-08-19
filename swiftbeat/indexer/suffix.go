@@ -61,12 +61,12 @@ func (s *Suffix) init() {
 // BuildIndex builds index for one suffix
 // TODO: move away from naive linear scanning to better strategy
 func (s *Suffix) BuildIndex() {
+	logp.Debug("suffix", "Build index for suffix: %s", s.path)
 
 	// load hash list for the suffix
 	s.init()
 
 	for _, hash := range s.hashes {
-		logp.Debug("hash", "Build index for hash: %s", hash.path)
 		hash.BuildIndex()
 	}
 }

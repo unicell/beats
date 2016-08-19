@@ -49,6 +49,7 @@ func (h *Hash) init() {
 				path:  filepath.Join(path, file.Name()),
 				mtime: file.ModTime(),
 			},
+			metadata: map[string]string{},
 		}
 		dfiles = append(dfiles, dfile)
 	}
@@ -60,12 +61,12 @@ func (h *Hash) init() {
 // BuildIndex builds index for one hash dir
 // TODO: move away from naive linear scanning to better strategy
 func (h *Hash) BuildIndex() {
+	logp.Debug("hash", "Build index for hash: %s", h.path)
 
 	// load file list for the hash
 	h.init()
 
 	for _, dfile := range h.datafiles {
-		logp.Debug("datafile", "Build index for datafile: %s", dfile.path)
 		dfile.BuildIndex()
 	}
 }

@@ -62,12 +62,12 @@ func (p *Partition) init() {
 // BuildIndex builds index for one partition
 // TODO: move away from naive linear scanning to better strategy
 func (p *Partition) BuildIndex() {
+	logp.Debug("partition", "Build index for partition: %s", p.path)
 
 	// load suffix list for the partition
 	p.init()
 
 	for _, suffix := range p.suffixes {
-		logp.Debug("suffix", "Build index for suffix: %s", suffix.path)
 		suffix.BuildIndex()
 	}
 }

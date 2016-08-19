@@ -154,7 +154,6 @@ func (rl *ResourceLayout) BuildIndex() {
 	logp.Debug("indexer", "Build index for resource: %s", rl.resourceType)
 
 	for _, part := range rl.partitions {
-		logp.Debug("partition", "Build index for partition: %s", part.path)
 		part.BuildIndex()
 	}
 }
