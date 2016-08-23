@@ -25,7 +25,7 @@ type Indexer interface {
 type ResourceLayout struct {
 	*IndexRecord
 	resourceType string
-	partitions   []Partition
+	partitions   []*Partition
 }
 
 // Layout struct represent the top level Swift disk layout
@@ -63,7 +63,7 @@ func NewLayout(path string) (*Layout, error) {
 				path: subpath,
 			},
 			resourceType: fname,
-			partitions:   []Partition{},
+			partitions:   nil,
 		}
 
 		switch fname {
@@ -82,53 +82,38 @@ func NewLayout(path string) (*Layout, error) {
 // initResource read and initialize partitions for specified resource
 func initResource(layout *Layout, resource string) {
 
-	var path string
+	var rl *ResourceLayout
 	var parts PartitionSorter
 
 	switch resource {
 	case "accounts":
-		path = layout.accounts.path
-		parts = layout.accounts.partitions
+		rl = layout.accounts
 	case "containers":
-		path = layout.containers.path
-		parts = layout.containers.partitions
+		rl = layout.containers
 	case "objects":
-		path = layout.objects.path
-		parts = layout.objects.partitions
+		rl = layout.objects
 	}
 
-	logp.Debug("indexer", "Init resource layout: %s", path)
+	logp.Debug("indexer", "Init resource layout: %s", rl.path)
 
-	files, err := ioutil.ReadDir(path)
+	files, err := ioutil.ReadDir(rl.path)
 	if err != nil {
-		logp.Err("list dir(%s) failed: %v", path, err)
+		logp.Err("list dir(%s) failed: %v", rl.path, err)
 		return
 	}
 
+	parts = rl.partitions
 	for _, file := range files {
 		if !file.IsDir() {
 			continue
 		}
-		part := Partition{
-			IndexRecord: &IndexRecord{
-				path:  filepath.Join(path, file.Name()),
-				mtime: file.ModTime(),
-			},
-			suffixes: []Suffix{},
-		}
+		part, _ := NewPartition(rl, file)
 		parts = append(parts, part)
 	}
 	sort.Sort(parts)
 
 	// set initialized partitions struct back to resource layout object
-	switch resource {
-	case "accounts":
-		layout.accounts.partitions = parts
-	case "containers":
-		layout.containers.partitions = parts
-	case "objects":
-		layout.objects.partitions = parts
-	}
+	rl.partitions = parts
 }
 
 func (l *Layout) init() {

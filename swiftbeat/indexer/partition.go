@@ -2,6 +2,7 @@ package indexer
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sort"
 
@@ -10,11 +11,13 @@ import (
 
 type Partition struct {
 	*IndexRecord
-	// todo: hashes.pkl
-	suffixes []Suffix
+	name string
+	rl   *ResourceLayout
+	// TODO: hashes.pkl
+	suffixes []*Suffix
 }
 
-type PartitionSorter []Partition
+type PartitionSorter []*Partition
 
 func (parts PartitionSorter) Len() int {
 	return len(parts)
@@ -26,6 +29,19 @@ func (parts PartitionSorter) Less(i, j int) bool {
 
 func (parts PartitionSorter) Swap(i, j int) {
 	parts[i], parts[j] = parts[j], parts[i]
+}
+
+func NewPartition(rl *ResourceLayout, file os.FileInfo) (*Partition, error) {
+	part := &Partition{
+		IndexRecord: &IndexRecord{
+			path:  filepath.Join(rl.path, file.Name()),
+			mtime: file.ModTime(),
+		},
+		name:     file.Name(),
+		rl:       rl,
+		suffixes: nil,
+	}
+	return part, nil
 }
 
 func (p *Partition) init() {
@@ -45,13 +61,7 @@ func (p *Partition) init() {
 			continue
 		}
 
-		suffix := Suffix{
-			IndexRecord: &IndexRecord{
-				path:  filepath.Join(path, file.Name()),
-				mtime: file.ModTime(),
-			},
-			hashes: []Hash{},
-		}
+		suffix, _ := NewSuffix(p, file)
 		suffixes = append(suffixes, suffix)
 	}
 

@@ -2,7 +2,8 @@ package indexer
 
 import (
 	"bytes"
-	//"os"
+	"os"
+	"path/filepath"
 	"syscall"
 
 	"github.com/elastic/beats/libbeat/logp"
@@ -10,7 +11,8 @@ import (
 )
 
 const (
-	metadataKey  = "user.swift.metadata"
+	metadataKey = "user.swift.metadata"
+	// XXX: is 4096 enough for all the cases?
 	xattrBufSize = 4096
 )
 
@@ -25,12 +27,14 @@ type DataRecord struct {
 
 type Datafile struct {
 	*IndexRecord
+	name string
+	hash *Hash
 	// for simplicity, store both kv in string
 	// and convert if necessary when use
 	metadata map[string]string
 }
 
-type DatafileSorter []Datafile
+type DatafileSorter []*Datafile
 
 func (dfiles DatafileSorter) Len() int {
 	return len(dfiles)
@@ -42,6 +46,20 @@ func (dfiles DatafileSorter) Less(i, j int) bool {
 
 func (dfiles DatafileSorter) Swap(i, j int) {
 	dfiles[i], dfiles[j] = dfiles[j], dfiles[i]
+}
+
+// NewDatafile returns a new Datafile object
+func NewDatafile(h *Hash, file os.FileInfo) (*Datafile, error) {
+	dfile := &Datafile{
+		IndexRecord: &IndexRecord{
+			path:  filepath.Join(h.path, file.Name()),
+			mtime: file.ModTime(),
+		},
+		name:     file.Name(),
+		hash:     h,
+		metadata: map[string]string{},
+	}
+	return dfile, nil
 }
 
 func (f *Datafile) init() {

@@ -2,6 +2,7 @@ package indexer
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sort"
 
@@ -10,10 +11,12 @@ import (
 
 type Suffix struct {
 	*IndexRecord
-	hashes []Hash
+	name   string
+	part   *Partition
+	hashes []*Hash
 }
 
-type SuffixSorter []Suffix
+type SuffixSorter []*Suffix
 
 func (suffixes SuffixSorter) Len() int {
 	return len(suffixes)
@@ -25,6 +28,19 @@ func (suffixes SuffixSorter) Less(i, j int) bool {
 
 func (suffixes SuffixSorter) Swap(i, j int) {
 	suffixes[i], suffixes[j] = suffixes[j], suffixes[i]
+}
+
+func NewSuffix(p *Partition, file os.FileInfo) (*Suffix, error) {
+	suffix := &Suffix{
+		IndexRecord: &IndexRecord{
+			path:  filepath.Join(p.path, file.Name()),
+			mtime: file.ModTime(),
+		},
+		name:   file.Name(),
+		part:   p,
+		hashes: nil,
+	}
+	return suffix, nil
 }
 
 func (s *Suffix) init() {
@@ -44,13 +60,7 @@ func (s *Suffix) init() {
 			continue
 		}
 
-		hash := Hash{
-			IndexRecord: &IndexRecord{
-				path:  filepath.Join(path, file.Name()),
-				mtime: file.ModTime(),
-			},
-			datafiles: []Datafile{},
-		}
+		hash, _ := NewHash(s, file)
 		hashes = append(hashes, hash)
 	}
 

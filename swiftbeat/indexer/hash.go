@@ -2,6 +2,7 @@ package indexer
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sort"
 
@@ -10,10 +11,12 @@ import (
 
 type Hash struct {
 	*IndexRecord
-	datafiles []Datafile
+	name      string
+	suffix    *Suffix
+	datafiles []*Datafile
 }
 
-type HashSorter []Hash
+type HashSorter []*Hash
 
 func (hashes HashSorter) Len() int {
 	return len(hashes)
@@ -25,6 +28,19 @@ func (hashes HashSorter) Less(i, j int) bool {
 
 func (hashes HashSorter) Swap(i, j int) {
 	hashes[i], hashes[j] = hashes[j], hashes[i]
+}
+
+func NewHash(s *Suffix, file os.FileInfo) (*Hash, error) {
+	hash := &Hash{
+		IndexRecord: &IndexRecord{
+			path:  filepath.Join(s.path, file.Name()),
+			mtime: file.ModTime(),
+		},
+		name:      file.Name(),
+		suffix:    s,
+		datafiles: nil,
+	}
+	return hash, nil
 }
 
 func (h *Hash) init() {
@@ -44,13 +60,7 @@ func (h *Hash) init() {
 			continue
 		}
 
-		dfile := Datafile{
-			IndexRecord: &IndexRecord{
-				path:  filepath.Join(path, file.Name()),
-				mtime: file.ModTime(),
-			},
-			metadata: map[string]string{},
-		}
+		dfile, _ := NewDatafile(h, file)
 		dfiles = append(dfiles, dfile)
 	}
 
