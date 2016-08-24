@@ -6,8 +6,9 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/elastic/beats/libbeat/logp"
 	pickle "github.com/hydrogen18/stalecucumber"
+
+	"github.com/elastic/beats/libbeat/logp"
 )
 
 const (
@@ -15,15 +16,6 @@ const (
 	// XXX: is 4096 enough for all the cases?
 	xattrBufSize = 4096
 )
-
-type DataRecord struct {
-	contentLength    int
-	contentType      string
-	etag             string
-	xObjectMetaMtime string
-	xTimestamp       string
-	name             string
-}
 
 type Datafile struct {
 	*IndexRecord
@@ -49,7 +41,10 @@ func (dfiles DatafileSorter) Swap(i, j int) {
 }
 
 // NewDatafile returns a new Datafile object
-func NewDatafile(h *Hash, file os.FileInfo) (*Datafile, error) {
+func NewDatafile(
+	h *Hash,
+	file os.FileInfo,
+) (*Datafile, error) {
 	dfile := &Datafile{
 		IndexRecord: &IndexRecord{
 			path:  filepath.Join(h.path, file.Name()),
@@ -62,7 +57,8 @@ func NewDatafile(h *Hash, file os.FileInfo) (*Datafile, error) {
 	return dfile, nil
 }
 
-func (f *Datafile) init() {
+// Parse individual datafile to fill in structured data
+func (f *Datafile) Parse() {
 	buf := make([]byte, xattrBufSize)
 
 	// read from xattr
@@ -83,22 +79,4 @@ func (f *Datafile) init() {
 	for key, value := range dict {
 		f.metadata[key.(string)] = value.(string)
 	}
-
-	logp.Debug("datafile", "metadata dump %s", f.metadata)
-}
-
-// BuildIndex builds index for one datafile
-// TODO: move away from naive linear scanning to better strategy
-func (f *Datafile) BuildIndex() {
-	logp.Debug("datafile", "Build index for datafile: %s", f.path)
-
-	// load file extended attribute
-	f.init()
-
-	//os.Exit(1)
-
-	//for _, dfile := range h.datafiles {
-	//logp.Debug("datafile", "Build index for datafile: %s", dfile.path)
-	//dfile.BuildIndex()
-	//}
 }

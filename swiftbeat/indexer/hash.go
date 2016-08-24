@@ -7,12 +7,15 @@ import (
 	"sort"
 
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/swiftbeat/input"
 )
 
 type Hash struct {
 	*IndexRecord
 	name      string
 	suffix    *Suffix
+	eventChan chan *input.Event
+	done      chan struct{}
 	datafiles []*Datafile
 }
 
@@ -30,7 +33,12 @@ func (hashes HashSorter) Swap(i, j int) {
 	hashes[i], hashes[j] = hashes[j], hashes[i]
 }
 
-func NewHash(s *Suffix, file os.FileInfo) (*Hash, error) {
+func NewHash(
+	s *Suffix,
+	file os.FileInfo,
+	eventChan chan *input.Event,
+	done chan struct{},
+) (*Hash, error) {
 	hash := &Hash{
 		IndexRecord: &IndexRecord{
 			path:  filepath.Join(s.path, file.Name()),
@@ -38,6 +46,8 @@ func NewHash(s *Suffix, file os.FileInfo) (*Hash, error) {
 		},
 		name:      file.Name(),
 		suffix:    s,
+		eventChan: eventChan,
+		done:      done,
 		datafiles: nil,
 	}
 	return hash, nil
@@ -45,7 +55,7 @@ func NewHash(s *Suffix, file os.FileInfo) (*Hash, error) {
 
 func (h *Hash) init() {
 	path := h.path
-	logp.Debug("hash", "Init hash layout: %s", path)
+	logp.Debug("hash", "Init hash: %s", path)
 
 	var dfiles DatafileSorter
 
@@ -69,14 +79,21 @@ func (h *Hash) init() {
 }
 
 // BuildIndex builds index for one hash dir
-// TODO: move away from naive linear scanning to better strategy
+// It is a blocking call and return after finishing index build for all
+// datafiles under the hash dir
 func (h *Hash) BuildIndex() {
-	logp.Debug("hash", "Build index for hash: %s", h.path)
+	logp.Debug("hash", "Start building index for hash: %s", h.path)
 
 	// load file list for the hash
 	h.init()
 
 	for _, dfile := range h.datafiles {
-		dfile.BuildIndex()
+		dfile.Parse()
+
+		event := input.NewEvent(dfile.path)
+		h.eventChan <- event
+
+		logp.Debug("datafile", "Event generated for %s - Dump %s",
+			dfile.path, dfile.metadata)
 	}
 }

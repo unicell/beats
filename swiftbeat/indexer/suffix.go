@@ -7,13 +7,16 @@ import (
 	"sort"
 
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/swiftbeat/input"
 )
 
 type Suffix struct {
 	*IndexRecord
-	name   string
-	part   *Partition
-	hashes []*Hash
+	name      string
+	part      *Partition
+	eventChan chan *input.Event
+	done      chan struct{}
+	hashes    []*Hash
 }
 
 type SuffixSorter []*Suffix
@@ -30,22 +33,29 @@ func (suffixes SuffixSorter) Swap(i, j int) {
 	suffixes[i], suffixes[j] = suffixes[j], suffixes[i]
 }
 
-func NewSuffix(p *Partition, file os.FileInfo) (*Suffix, error) {
+func NewSuffix(
+	p *Partition,
+	file os.FileInfo,
+	eventChan chan *input.Event,
+	done chan struct{},
+) (*Suffix, error) {
 	suffix := &Suffix{
 		IndexRecord: &IndexRecord{
 			path:  filepath.Join(p.path, file.Name()),
 			mtime: file.ModTime(),
 		},
-		name:   file.Name(),
-		part:   p,
-		hashes: nil,
+		name:      file.Name(),
+		part:      p,
+		eventChan: eventChan,
+		done:      done,
+		hashes:    nil,
 	}
 	return suffix, nil
 }
 
 func (s *Suffix) init() {
 	path := s.path
-	logp.Debug("suffix", "Init suffix layout: %s", path)
+	logp.Debug("suffix", "Init suffix: %s", path)
 
 	var hashes HashSorter
 
@@ -60,7 +70,7 @@ func (s *Suffix) init() {
 			continue
 		}
 
-		hash, _ := NewHash(s, file)
+		hash, _ := NewHash(s, file, s.eventChan, s.done)
 		hashes = append(hashes, hash)
 	}
 
@@ -69,9 +79,10 @@ func (s *Suffix) init() {
 }
 
 // BuildIndex builds index for one suffix
-// TODO: move away from naive linear scanning to better strategy
+// It is a blocking call and return after finishing index build for all
+// hashes under the suffix
 func (s *Suffix) BuildIndex() {
-	logp.Debug("suffix", "Build index for suffix: %s", s.path)
+	logp.Debug("suffix", "Start building index for suffix: %s", s.path)
 
 	// load hash list for the suffix
 	s.init()
