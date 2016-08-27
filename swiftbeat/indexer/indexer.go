@@ -45,6 +45,7 @@ type Layout struct {
 // respective path
 func NewLayout(
 	path string,
+	eventChan chan *input.Event,
 	done chan struct{},
 ) (*Layout, error) {
 	logp.Debug("indexer", "Init layout: %s", path)
@@ -71,7 +72,7 @@ func NewLayout(
 				path: subpath,
 			},
 			resourceType: fname,
-			eventChan:    make(chan *input.Event),
+			eventChan:    eventChan,
 			sem:          NewSemaphore(2),
 			done:         done,
 			partitions:   nil,

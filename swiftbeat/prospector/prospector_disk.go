@@ -159,7 +159,7 @@ func (p *ProspectorDisk) scan() {
 	var err error
 
 	for _, path := range p.config.Paths {
-		p.layout, err = indexer.NewLayout(path, p.Prospector.done)
+		p.layout, err = indexer.NewLayout(path, p.Prospector.harvesterChan, p.Prospector.done)
 		if err != nil {
 			// skip path that failed to init layout
 			continue
@@ -168,9 +168,19 @@ func (p *ProspectorDisk) scan() {
 		p.layout.BuildIndex()
 		p.layout.StartEventCollector()
 
-		for ev := range p.layout.GetEvents() {
-			logp.Debug("hash", "--> debug - #3: %s", ev)
-		}
+		go func() {
+			for {
+				select {
+				case <-p.Prospector.done:
+					logp.Info("Prospector disk channel stopped")
+					return
+				case ev := <-p.layout.GetEvents():
+					logp.Debug("event", "--> debug - #3: %s", ev)
+					p.Prospector.spoolerChan <- ev
+				}
+
+			}
+		}()
 	}
 
 	//p.Indexer.BuildIndex()

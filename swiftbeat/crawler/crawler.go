@@ -8,26 +8,24 @@ import (
 	"github.com/elastic/beats/libbeat/logp"
 	//"github.com/elastic/beats/swiftbeat/input/file"
 	"github.com/elastic/beats/swiftbeat/prospector"
-	//"github.com/elastic/beats/swiftbeat/spooler"
+	"github.com/elastic/beats/swiftbeat/spooler"
 )
 
 type Crawler struct {
 	prospectors       []*prospector.Prospector
 	prospectorConfigs []*common.Config
-	//spooler           *spooler.Spooler
-	wg sync.WaitGroup
+	spooler           *spooler.Spooler
+	wg                sync.WaitGroup
 }
 
-// TODO
-//func New(spooler *spooler.Spooler, prospectorConfigs []*common.Config) (*Crawler, error) {
-func New(prospectorConfigs []*common.Config) (*Crawler, error) {
+func New(spooler *spooler.Spooler, prospectorConfigs []*common.Config) (*Crawler, error) {
 
 	if len(prospectorConfigs) == 0 {
 		return nil, fmt.Errorf("No prospectors defined. You must have at least one prospector defined in the config file.")
 	}
 
 	return &Crawler{
-		//spooler:           spooler,
+		spooler:           spooler,
 		prospectorConfigs: prospectorConfigs,
 	}, nil
 }
@@ -43,7 +41,7 @@ func (c *Crawler) Start() error {
 
 		// TODO
 		//prospector, err := prospector.NewProspector(prospectorConfig, states, c.spooler.Channel)
-		prospector, err := prospector.NewProspector(prospectorConfig)
+		prospector, err := prospector.NewProspector(prospectorConfig, c.spooler.Channel)
 		if err != nil {
 			return fmt.Errorf("Error in initing prospector: %s", err)
 		}

@@ -8,10 +8,10 @@ import (
 	"github.com/elastic/beats/libbeat/logp"
 	cfg "github.com/elastic/beats/swiftbeat/config"
 	"github.com/elastic/beats/swiftbeat/crawler"
-	//"github.com/elastic/beats/filebeat/input"
-	//"github.com/elastic/beats/filebeat/publish"
+	"github.com/elastic/beats/swiftbeat/input"
+	"github.com/elastic/beats/swiftbeat/publish"
 	//"github.com/elastic/beats/filebeat/registrar"
-	//"github.com/elastic/beats/filebeat/spooler"
+	"github.com/elastic/beats/swiftbeat/spooler"
 )
 
 // Swiftbeat is a beater object. Contains all objects needed to run the beat
@@ -50,24 +50,24 @@ func (sb *Swiftbeat) Run(b *beat.Beat) error {
 	//}
 
 	// Channel from harvesters to spooler
-	//publisherChan := make(chan []*input.Event, 1)
+	publisherChan := make(chan []*input.Event, 1)
 
+	// TODO
+	registrarChan := make(chan []*input.Event, 1)
 	// Publishes event to output
+	publisher := publish.New(config.PublishAsync,
+		publisherChan, registrarChan, b.Publisher)
 	//publisher := publish.New(config.PublishAsync,
 	//publisherChan, registrar.Channel, b.Publisher)
 
 	// Init and Start spooler: Harvesters dump events into the spooler.
-	//spooler, err := spooler.New(config, publisherChan)
-	//if err != nil {
-	//logp.Err("Could not init spooler: %v", err)
-	//return err
-	//}
+	spooler, err := spooler.New(config, publisherChan)
+	if err != nil {
+		logp.Err("Could not init spooler: %v", err)
+		return err
+	}
 
-	//logp.Err("Could not init crawler: %v", config.Prospectors)
-	//logp.Debug("prospector", "File Configs: %v", config.Prospectors[0].config.Paths)
-	// TODO
-	crawler, err := crawler.New(config.Prospectors)
-	//crawler, err := crawler.New(spooler, config.Prospectors)
+	crawler, err := crawler.New(spooler, config.Prospectors)
 	if err != nil {
 		logp.Err("Could not init crawler: %v", err)
 		return err
@@ -86,14 +86,14 @@ func (sb *Swiftbeat) Run(b *beat.Beat) error {
 	//defer registrar.Stop()
 
 	// Start publisher
-	//publisher.Start()
+	publisher.Start()
 	// Stopping publisher (might potentially drop items)
-	//defer publisher.Stop()
+	defer publisher.Stop()
 
 	// Starting spooler
-	//spooler.Start()
+	spooler.Start()
 	// Stopping spooler will flush items
-	//defer spooler.Stop()
+	defer spooler.Stop()
 
 	// TODO
 	//err = crawler.Start(registrar.GetStates())

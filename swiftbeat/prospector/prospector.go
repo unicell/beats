@@ -7,19 +7,19 @@ import (
 
 	cfg "github.com/elastic/beats/swiftbeat/config"
 	//"github.com/elastic/beats/filebeat/harvester"
-	//"github.com/elastic/beats/filebeat/input"
+	"github.com/elastic/beats/swiftbeat/input"
 	//"github.com/elastic/beats/filebeat/input/file"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 )
 
 type Prospector struct {
-	cfg          *common.Config // Raw config
-	config       prospectorConfig
-	prospectorer Prospectorer
-	//spoolerChan   chan *input.Event
-	//harvesterChan chan *input.Event
-	done chan struct{}
+	cfg           *common.Config // Raw config
+	config        prospectorConfig
+	prospectorer  Prospectorer
+	spoolerChan   chan *input.Event
+	harvesterChan chan *input.Event
+	done          chan struct{}
 	//states        *file.States
 	wg sync.WaitGroup
 }
@@ -31,13 +31,13 @@ type Prospectorer interface {
 
 // TODO
 //func NewProspector(cfg *common.Config, states file.States, spoolerChan chan *input.Event) (*Prospector, error) {
-func NewProspector(cfg *common.Config) (*Prospector, error) {
+func NewProspector(cfg *common.Config, spoolerChan chan *input.Event) (*Prospector, error) {
 	prospector := &Prospector{
-		cfg:    cfg,
-		config: defaultConfig,
-		//spoolerChan:   spoolerChan,
-		//harvesterChan: make(chan *input.Event),
-		done: make(chan struct{}),
+		cfg:           cfg,
+		config:        defaultConfig,
+		spoolerChan:   spoolerChan,
+		harvesterChan: make(chan *input.Event),
+		done:          make(chan struct{}),
 		//states:        states.Copy(),
 		wg: sync.WaitGroup{},
 	}
@@ -104,24 +104,26 @@ func (p *Prospector) Run() {
 			case <-p.done:
 				logp.Info("Prospector channel stopped")
 				return
-				//case event := <-p.harvesterChan:
-				//// Add ttl if cleanOlder is enabled
+			case event := <-p.harvesterChan:
+				//Add ttl if cleanOlder is enabled
 				//if p.config.CleanInactive > 0 {
 				//event.State.TTL = p.config.CleanInactive
 				//}
-				//select {
-				//case <-p.done:
-				//logp.Info("Prospector channel stopped")
-				//return
-				//case p.spoolerChan <- event:
-				//p.states.Update(event.State)
-				//}
+				select {
+				case <-p.done:
+					logp.Info("Prospector channel stopped")
+					return
+				case p.spoolerChan <- event:
+					//p.states.Update(event.State)
+				}
 			}
 		}
 	}()
 
 	// Initial prospector run
 	p.prospectorer.Run()
+	// TODO
+	return
 
 	for {
 		select {
