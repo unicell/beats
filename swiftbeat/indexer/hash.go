@@ -12,7 +12,6 @@ import (
 
 type Hash struct {
 	*IndexRecord
-	name      string
 	suffix    *Suffix
 	eventChan chan *input.Event
 	done      chan struct{}
@@ -41,10 +40,10 @@ func NewHash(
 ) (*Hash, error) {
 	hash := &Hash{
 		IndexRecord: &IndexRecord{
+			name:  file.Name(),
 			path:  filepath.Join(s.path, file.Name()),
 			mtime: file.ModTime(),
 		},
-		name:      file.Name(),
 		suffix:    s,
 		eventChan: eventChan,
 		done:      done,

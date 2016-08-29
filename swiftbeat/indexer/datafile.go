@@ -19,7 +19,6 @@ const (
 
 type Datafile struct {
 	*IndexRecord
-	name string
 	hash *Hash
 	// for simplicity, store both kv in string
 	// and convert if necessary when use
@@ -47,10 +46,10 @@ func NewDatafile(
 ) (*Datafile, error) {
 	dfile := &Datafile{
 		IndexRecord: &IndexRecord{
+			name:  file.Name(),
 			path:  filepath.Join(h.path, file.Name()),
 			mtime: file.ModTime(),
 		},
-		name:     file.Name(),
 		hash:     h,
 		metadata: map[string]string{},
 	}

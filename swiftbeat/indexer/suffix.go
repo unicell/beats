@@ -12,7 +12,6 @@ import (
 
 type Suffix struct {
 	*IndexRecord
-	name      string
 	part      *Partition
 	eventChan chan *input.Event
 	done      chan struct{}
@@ -41,10 +40,10 @@ func NewSuffix(
 ) (*Suffix, error) {
 	suffix := &Suffix{
 		IndexRecord: &IndexRecord{
+			name:  file.Name(),
 			path:  filepath.Join(p.path, file.Name()),
 			mtime: file.ModTime(),
 		},
-		name:      file.Name(),
 		part:      p,
 		eventChan: eventChan,
 		done:      done,

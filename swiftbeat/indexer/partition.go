@@ -12,7 +12,6 @@ import (
 
 type Partition struct {
 	*IndexRecord
-	name      string
 	rl        *ResourceLayout
 	eventChan chan *input.Event
 	done      chan struct{}
@@ -41,10 +40,10 @@ func NewPartition(
 ) (*Partition, error) {
 	part := &Partition{
 		IndexRecord: &IndexRecord{
+			name:  file.Name(),
 			path:  filepath.Join(rl.path, file.Name()),
 			mtime: file.ModTime(),
 		},
-		name:      file.Name(),
 		rl:        rl,
 		eventChan: make(chan *input.Event),
 		done:      done,

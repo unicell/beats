@@ -12,6 +12,7 @@ import (
 
 // IndexRecord is a struct to be embedded in all indexable structs
 type IndexRecord struct {
+	name       string
 	path       string
 	mtime      time.Time
 	lastSynced time.Time
@@ -26,11 +27,10 @@ type Indexer interface {
 // ResourceLayout is a generic modeling for all 3 types of resources
 type ResourceLayout struct {
 	*IndexRecord
-	resourceType string
-	eventChan    chan *input.Event
-	sem          Semaphore
-	done         chan struct{}
-	partitions   []*Partition
+	eventChan  chan *input.Event
+	sem        Semaphore
+	done       chan struct{}
+	partitions []*Partition
 }
 
 // Layout struct represent the top level Swift disk layout
@@ -69,13 +69,13 @@ func NewLayout(
 		subpath := filepath.Join(path, fname)
 		resource := &ResourceLayout{
 			IndexRecord: &IndexRecord{
+				name: fname,
 				path: subpath,
 			},
-			resourceType: fname,
-			eventChan:    eventChan,
-			sem:          NewSemaphore(2),
-			done:         done,
-			partitions:   nil,
+			eventChan:  eventChan,
+			sem:        NewSemaphore(2),
+			done:       done,
+			partitions: nil,
 		}
 
 		switch fname {
@@ -160,7 +160,7 @@ func (l *Layout) GetEvents() <-chan *input.Event {
 // It is a non-blocking call to start index build, however the actual time when
 // it happens depends on the concurrency settings
 func (rl *ResourceLayout) BuildIndex() {
-	logp.Debug("indexer", "Start building index for resource: %s", rl.resourceType)
+	logp.Debug("indexer", "Start building index for resource: %s", rl.name)
 
 	// number of partition indexer can run simulataneously
 	// is controlled by rl level semaphore
