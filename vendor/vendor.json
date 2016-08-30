@@ -3,6 +3,18 @@
 	"ignore": "",
 	"package": [
 		{
+			"checksumSHA1": "x2U+c0vFy7I+xVmB6nUdA8EWyLM=",
+			"path": "github.com/cactus/go-statsd-client/statsd",
+			"revision": "1c27c506c7a0584d017ca479f91b88d6a6538332",
+			"revisionTime": "2016-08-20T08:06:51Z"
+		},
+		{
+			"checksumSHA1": "Thg9sicXr23/02y0VqmmJoEZIzI=",
+			"path": "github.com/gorilla/context",
+			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
+			"revisionTime": "2016-08-17T18:46:32Z"
+		},
+		{
 			"checksumSHA1": "Uz2/YPnqTZ0R2Mc8BlYyq/X8kOk=",
 			"path": "github.com/hydrogen18/stalecucumber",
 			"revision": "44fa6fe7eaeeacdef466943f1e0a455f19a2bccc",
@@ -13,6 +25,27 @@
 			"path": "github.com/hydrogen18/stalecucumber/struct_export_test",
 			"revision": "44fa6fe7eaeeacdef466943f1e0a455f19a2bccc",
 			"revisionTime": "2016-08-18T02:24:30Z"
+		},
+		{
+			"checksumSHA1": "NLAqE/o4TDDB+r+CQovGqEhM1Ow=",
+			"path": "github.com/justinas/alice",
+			"revision": "43e429cd03e6faac34faf94153cfb7a5adb6b928",
+			"revisionTime": "2016-07-09T11:51:41Z"
+		},
+		{
+			"checksumSHA1": "7NA4JORxDKOuLTl0WI/vgTd52z4=",
+			"path": "github.com/openstack/swift",
+			"revision": "1ab2a296f58ae76aeffef9f3f0fb90e15358be27",
+			"revisionTime": "2016-08-30T16:59:45Z",
+			"tree": true,
+			"version": "feature/hummingbird",
+			"versionExact": "feature/hummingbird"
+		},
+		{
+			"checksumSHA1": "CdFUSTEB5KTYNpSH47vQqUcflVM=",
+			"path": "github.com/vaughan0/go-ini",
+			"revision": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1",
+			"revisionTime": "2013-09-23T14:52:12Z"
 		}
 	],
 	"rootPath": "github.com/elastic/beats"
