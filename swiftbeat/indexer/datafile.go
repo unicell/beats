@@ -82,15 +82,30 @@ func (f *Datafile) Parse() {
 }
 
 func (f *Datafile) ToSwiftObject() swift.Object {
+	h := f.hash
+	if h == nil {
+		logp.Critical("ToSwiftObject: BUG: hash reference is nil")
+	}
+
+	s := h.suffix
+	if s == nil {
+		logp.Critical("ToSwiftObject: BUG: suffix reference is nil")
+	}
+
+	p := s.part
+	if p == nil {
+		logp.Critical("ToSwiftObject: BUG: partition reference is nil")
+	}
+
 	obj := swift.Object{
-		Datafile:       f.name,
-		DatafileMtime:  f.mtime,
-		Hash:           f.hash.name,
-		HashMtime:      f.hash.mtime,
-		Suffix:         f.hash.suffix.name,
-		SuffixMtime:    f.hash.suffix.mtime,
-		Partition:      f.hash.suffix.part.name,
-		PartitionMtime: f.hash.suffix.part.mtime,
+		Name:           f.name,
+		Mtime:          f.mtime,
+		Hash:           h.name,
+		HashMtime:      h.mtime,
+		Suffix:         s.name,
+		SuffixMtime:    s.mtime,
+		Partition:      p.name,
+		PartitionMtime: p.mtime,
 		Metadata:       f.metadata,
 		Path:           f.path,
 	}

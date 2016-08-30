@@ -5,14 +5,14 @@ import (
 )
 
 type Object struct {
-	Partition      string
-	PartitionMtime time.Time
-	Suffix         string
-	SuffixMtime    time.Time
+	Name           string
+	Mtime          time.Time
 	Hash           string
 	HashMtime      time.Time
-	Datafile       string
-	DatafileMtime  time.Time
+	Suffix         string
+	SuffixMtime    time.Time
+	Partition      string
+	PartitionMtime time.Time
 	Metadata       map[string]string
 	Path           string
 }
