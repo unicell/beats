@@ -13,7 +13,7 @@ import (
 type Hash struct {
 	*IndexRecord
 	suffix    *Suffix
-	eventChan chan *input.Event
+	eventChan chan input.Event
 	done      chan struct{}
 	datafiles []*Datafile
 }
@@ -35,7 +35,7 @@ func (hashes HashSorter) Swap(i, j int) {
 func NewHash(
 	s *Suffix,
 	file os.FileInfo,
-	eventChan chan *input.Event,
+	eventChan chan input.Event,
 	done chan struct{},
 ) (*Hash, error) {
 	hash := &Hash{
@@ -89,7 +89,7 @@ func (h *Hash) BuildIndex() {
 	for _, dfile := range h.datafiles {
 		dfile.Parse()
 
-		event := input.NewEvent(dfile.path)
+		event := input.NewObjectEvent(dfile.ToSwiftObject())
 		h.eventChan <- event
 
 		logp.Debug("datafile", "Event generated for %s - Dump %s",

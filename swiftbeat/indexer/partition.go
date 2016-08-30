@@ -13,7 +13,7 @@ import (
 type Partition struct {
 	*IndexRecord
 	rl        *ResourceLayout
-	eventChan chan *input.Event
+	eventChan chan input.Event
 	done      chan struct{}
 	// TODO: hashes.pkl
 	suffixes []*Suffix
@@ -45,7 +45,7 @@ func NewPartition(
 			mtime: file.ModTime(),
 		},
 		rl:        rl,
-		eventChan: make(chan *input.Event),
+		eventChan: make(chan input.Event),
 		done:      done,
 		suffixes:  nil,
 	}
@@ -98,6 +98,6 @@ func (p *Partition) BuildIndex() {
 }
 
 // GetEvents returns the event channel for all partition related events
-func (p *Partition) GetEvents() <-chan *input.Event {
+func (p *Partition) GetEvents() <-chan input.Event {
 	return p.eventChan
 }

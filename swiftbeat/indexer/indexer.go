@@ -21,13 +21,13 @@ type IndexRecord struct {
 // Indexer interface for all level indexable resources
 type Indexer interface {
 	BuildIndex()
-	GetEvents() <-chan *input.Event
+	GetEvents() <-chan input.Event
 }
 
 // ResourceLayout is a generic modeling for all 3 types of resources
 type ResourceLayout struct {
 	*IndexRecord
-	eventChan  chan *input.Event
+	eventChan  chan input.Event
 	sem        Semaphore
 	done       chan struct{}
 	partitions []*Partition
@@ -45,7 +45,7 @@ type Layout struct {
 // respective path
 func NewLayout(
 	path string,
-	eventChan chan *input.Event,
+	eventChan chan input.Event,
 	done chan struct{},
 ) (*Layout, error) {
 	logp.Debug("indexer", "Init layout: %s", path)
@@ -152,7 +152,7 @@ func (l *Layout) StartEventCollector() {
 }
 
 // TODO: handle accounts/containers as well
-func (l *Layout) GetEvents() <-chan *input.Event {
+func (l *Layout) GetEvents() <-chan input.Event {
 	return l.objects.GetEvents()
 }
 
@@ -174,7 +174,7 @@ func (rl *ResourceLayout) BuildIndex() {
 func (rl *ResourceLayout) StartEventCollector() {
 
 	// redirect event from individual channel to rl indexer level
-	output := func(ch <-chan *input.Event) {
+	output := func(ch <-chan input.Event) {
 		for ev := range ch {
 			select {
 			// TODO: update last tracked record
@@ -191,6 +191,6 @@ func (rl *ResourceLayout) StartEventCollector() {
 }
 
 // GetEvents returns the event channel for all resource related events
-func (rl *ResourceLayout) GetEvents() <-chan *input.Event {
+func (rl *ResourceLayout) GetEvents() <-chan input.Event {
 	return rl.eventChan
 }

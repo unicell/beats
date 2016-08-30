@@ -13,7 +13,7 @@ import (
 type Suffix struct {
 	*IndexRecord
 	part      *Partition
-	eventChan chan *input.Event
+	eventChan chan input.Event
 	done      chan struct{}
 	hashes    []*Hash
 }
@@ -35,7 +35,7 @@ func (suffixes SuffixSorter) Swap(i, j int) {
 func NewSuffix(
 	p *Partition,
 	file os.FileInfo,
-	eventChan chan *input.Event,
+	eventChan chan input.Event,
 	done chan struct{},
 ) (*Suffix, error) {
 	suffix := &Suffix{

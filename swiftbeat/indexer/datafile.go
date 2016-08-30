@@ -9,6 +9,7 @@ import (
 	pickle "github.com/hydrogen18/stalecucumber"
 
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/swiftbeat/input/swift"
 )
 
 const (
@@ -78,4 +79,20 @@ func (f *Datafile) Parse() {
 	for key, value := range dict {
 		f.metadata[key.(string)] = value.(string)
 	}
+}
+
+func (f *Datafile) ToSwiftObject() swift.Object {
+	obj := swift.Object{
+		Datafile:       f.name,
+		DatafileMtime:  f.mtime,
+		Hash:           f.hash.name,
+		HashMtime:      f.hash.mtime,
+		Suffix:         f.hash.suffix.name,
+		SuffixMtime:    f.hash.suffix.mtime,
+		Partition:      f.hash.suffix.part.name,
+		PartitionMtime: f.hash.suffix.part.mtime,
+		Metadata:       f.metadata,
+		Path:           f.path,
+	}
+	return obj
 }

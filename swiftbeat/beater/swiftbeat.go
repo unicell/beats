@@ -50,10 +50,10 @@ func (sb *Swiftbeat) Run(b *beat.Beat) error {
 	//}
 
 	// Channel from harvesters to spooler
-	publisherChan := make(chan []*input.Event, 1)
+	publisherChan := make(chan []input.Event, 1)
 
 	// TODO
-	registrarChan := make(chan []*input.Event, 1)
+	registrarChan := make(chan []input.Event, 1)
 	// Publishes event to output
 	publisher := publish.New(config.PublishAsync,
 		publisherChan, registrarChan, b.Publisher)
