@@ -8,6 +8,7 @@ import (
 
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/swiftbeat/input"
+	"github.com/elastic/beats/swiftbeat/input/swift"
 )
 
 type Suffix struct {
@@ -25,7 +26,7 @@ func (suffixes SuffixSorter) Len() int {
 }
 
 func (suffixes SuffixSorter) Less(i, j int) bool {
-	return suffixes[i].mtime.After(suffixes[j].mtime)
+	return suffixes[i].Mtime.After(suffixes[j].Mtime)
 }
 
 func (suffixes SuffixSorter) Swap(i, j int) {
@@ -40,9 +41,9 @@ func NewSuffix(
 ) (*Suffix, error) {
 	suffix := &Suffix{
 		IndexRecord: &IndexRecord{
-			name:  file.Name(),
-			path:  filepath.Join(p.path, file.Name()),
-			mtime: file.ModTime(),
+			Name:  file.Name(),
+			Path:  filepath.Join(p.Path, file.Name()),
+			Mtime: file.ModTime(),
 		},
 		part:      p,
 		eventChan: eventChan,
@@ -53,7 +54,7 @@ func NewSuffix(
 }
 
 func (s *Suffix) init() {
-	path := s.path
+	path := s.Path
 	logp.Debug("suffix", "Init suffix: %s", path)
 
 	var hashes HashSorter
@@ -81,7 +82,7 @@ func (s *Suffix) init() {
 // It is a blocking call and return after finishing index build for all
 // hashes under the suffix
 func (s *Suffix) BuildIndex() {
-	logp.Debug("suffix", "Start building index for suffix: %s", s.path)
+	logp.Debug("suffix", "Start building index for suffix: %s", s.Path)
 
 	// load hash list for the suffix
 	s.init()
@@ -89,4 +90,13 @@ func (s *Suffix) BuildIndex() {
 	for _, hash := range s.hashes {
 		hash.BuildIndex()
 	}
+}
+
+// AnnotateSwiftObject add info from indexer to the swift.Object data object
+func (s *Suffix) AnnotateSwiftObject(obj *swift.Object) {
+	if s.part == nil {
+		logp.Critical("AnnotateSwiftObject: BUG: partition reference is nil")
+	}
+	s.part.AnnotateSwiftObject(obj)
+	obj.Annotate(*s)
 }

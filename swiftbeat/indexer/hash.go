@@ -8,6 +8,7 @@ import (
 
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/swiftbeat/input"
+	"github.com/elastic/beats/swiftbeat/input/swift"
 )
 
 type Hash struct {
@@ -25,7 +26,7 @@ func (hashes HashSorter) Len() int {
 }
 
 func (hashes HashSorter) Less(i, j int) bool {
-	return hashes[i].mtime.After(hashes[j].mtime)
+	return hashes[i].Mtime.After(hashes[j].Mtime)
 }
 
 func (hashes HashSorter) Swap(i, j int) {
@@ -40,9 +41,9 @@ func NewHash(
 ) (*Hash, error) {
 	hash := &Hash{
 		IndexRecord: &IndexRecord{
-			name:  file.Name(),
-			path:  filepath.Join(s.path, file.Name()),
-			mtime: file.ModTime(),
+			Name:  file.Name(),
+			Path:  filepath.Join(s.Path, file.Name()),
+			Mtime: file.ModTime(),
 		},
 		suffix:    s,
 		eventChan: eventChan,
@@ -53,7 +54,7 @@ func NewHash(
 }
 
 func (h *Hash) init() {
-	path := h.path
+	path := h.Path
 	logp.Debug("hash", "Init hash: %s", path)
 
 	var dfiles DatafileSorter
@@ -81,7 +82,7 @@ func (h *Hash) init() {
 // It is a blocking call and return after finishing index build for all
 // datafiles under the hash dir
 func (h *Hash) BuildIndex() {
-	logp.Debug("hash", "Start building index for hash: %s", h.path)
+	logp.Debug("hash", "Start building index for hash: %s", h.Path)
 
 	// load file list for the hash
 	h.init()
@@ -93,6 +94,15 @@ func (h *Hash) BuildIndex() {
 		h.eventChan <- event
 
 		logp.Debug("datafile", "Event generated for %s - Dump %s",
-			dfile.path, dfile.metadata)
+			dfile.Path, dfile.Metadata)
 	}
+}
+
+// AnnotateSwiftObject add info from indexer to the swift.Object data object
+func (h *Hash) AnnotateSwiftObject(obj *swift.Object) {
+	if h.suffix == nil {
+		logp.Critical("AnnotateSwiftObject: BUG: suffix reference is nil")
+	}
+	h.suffix.AnnotateSwiftObject(obj)
+	obj.Annotate(*h)
 }

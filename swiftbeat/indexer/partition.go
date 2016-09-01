@@ -8,6 +8,7 @@ import (
 
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/swiftbeat/input"
+	"github.com/elastic/beats/swiftbeat/input/swift"
 )
 
 type Partition struct {
@@ -26,7 +27,7 @@ func (parts PartitionSorter) Len() int {
 }
 
 func (parts PartitionSorter) Less(i, j int) bool {
-	return parts[i].mtime.After(parts[j].mtime)
+	return parts[i].Mtime.After(parts[j].Mtime)
 }
 
 func (parts PartitionSorter) Swap(i, j int) {
@@ -40,9 +41,9 @@ func NewPartition(
 ) (*Partition, error) {
 	part := &Partition{
 		IndexRecord: &IndexRecord{
-			name:  file.Name(),
-			path:  filepath.Join(res.path, file.Name()),
-			mtime: file.ModTime(),
+			Name:  file.Name(),
+			Path:  filepath.Join(res.Path, file.Name()),
+			Mtime: file.ModTime(),
 		},
 		res:       res,
 		eventChan: make(chan input.Event),
@@ -53,7 +54,7 @@ func NewPartition(
 }
 
 func (p *Partition) init() {
-	path := p.path
+	path := p.Path
 	logp.Debug("partition", "Init partition: %s", path)
 
 	var suffixes SuffixSorter
@@ -83,7 +84,7 @@ func (p *Partition) init() {
 func (p *Partition) BuildIndex() {
 	defer p.res.sem.release()
 
-	logp.Debug("partition", "Start building index for partition: %s", p.path)
+	logp.Debug("partition", "Start building index for partition: %s", p.Path)
 
 	// limit num of partition indexers can run simultaneously
 	// to avoid heavy IO hit
@@ -100,4 +101,13 @@ func (p *Partition) BuildIndex() {
 // GetEvents returns the event channel for all partition related events
 func (p *Partition) GetEvents() <-chan input.Event {
 	return p.eventChan
+}
+
+// AnnotateSwiftObject add info from indexer to the swift.Object data object
+func (p *Partition) AnnotateSwiftObject(obj *swift.Object) {
+	if p.res == nil {
+		logp.Critical("AnnotateSwiftObject: BUG: res reference is nil")
+	}
+	p.res.AnnotateSwiftObject(obj)
+	obj.Annotate(*p)
 }

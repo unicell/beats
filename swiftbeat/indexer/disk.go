@@ -4,24 +4,11 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"sort"
-	"time"
 
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/swiftbeat/input"
+	"github.com/elastic/beats/swiftbeat/input/swift"
 )
-
-// IndexRecord is a struct to be embedded in all indexable structs
-type IndexRecord struct {
-	name  string
-	path  string
-	mtime time.Time
-}
-
-// Indexer interface for all level indexable resources
-type Indexer interface {
-	BuildIndex()
-	GetEvents() <-chan input.Event
-}
 
 // Resource is a generic modeling for all 3 types of resources
 type Resource struct {
@@ -54,8 +41,8 @@ func NewDisk(
 
 	disk := &Disk{
 		IndexRecord: &IndexRecord{
-			name: name,
-			path: path,
+			Name: name,
+			Path: path,
 		},
 	}
 
@@ -76,8 +63,8 @@ func NewDisk(
 		subpath := filepath.Join(path, fname)
 		resource := &Resource{
 			IndexRecord: &IndexRecord{
-				name: fname,
-				path: subpath,
+				Name: fname,
+				Path: subpath,
 			},
 			disk:       disk,
 			eventChan:  eventChan,
@@ -114,11 +101,11 @@ func initResource(disk *Disk, resource string) {
 		r = disk.objects
 	}
 
-	logp.Debug("indexer", "Init resource: %s", r.path)
+	logp.Debug("indexer", "Init resource: %s", r.Path)
 
-	files, err := ioutil.ReadDir(r.path)
+	files, err := ioutil.ReadDir(r.Path)
 	if err != nil {
-		logp.Err("list dir(%s) failed: %v", r.path, err)
+		logp.Err("list dir(%s) failed: %v", r.Path, err)
 		return
 	}
 
@@ -136,39 +123,44 @@ func initResource(disk *Disk, resource string) {
 	r.partitions = parts
 }
 
-func (l *Disk) init() {
-	initResource(l, "accounts")
-	initResource(l, "containers")
-	initResource(l, "objects")
+func (d *Disk) init() {
+	initResource(d, "accounts")
+	initResource(d, "containers")
+	initResource(d, "objects")
 }
 
 // BuildIndex triggers index build recursively on all top level resources
-func (l *Disk) BuildIndex() {
+func (d *Disk) BuildIndex() {
 
 	// load partition list for top level resources
-	l.init()
+	d.init()
 
 	// TODO: properly handle relation between resources
-	//go l.accounts.BuildIndex()
-	//go l.containers.BuildIndex()
-	go l.objects.BuildIndex()
+	//go d.accounts.BuildIndex()
+	//go d.containers.BuildIndex()
+	go d.objects.BuildIndex()
 }
 
 // TODO: handle accounts/containers as well
-func (l *Disk) StartEventCollector() {
-	l.objects.StartEventCollector()
+func (d *Disk) StartEventCollector() {
+	d.objects.StartEventCollector()
 }
 
 // TODO: handle accounts/containers as well
-func (l *Disk) GetEvents() <-chan input.Event {
-	return l.objects.GetEvents()
+func (d *Disk) GetEvents() <-chan input.Event {
+	return d.objects.GetEvents()
+}
+
+// AnnotateSwiftObject add info from indexer to the swift.Object data object
+func (d *Disk) AnnotateSwiftObject(obj *swift.Object) {
+	obj.Annotate(*d)
 }
 
 // BuildIndex builds index iteratively for all partitions
 // It is a non-blocking call to start index build, however the actual time when
 // it happens depends on the concurrency settings
 func (r *Resource) BuildIndex() {
-	logp.Debug("indexer", "Start building index for resource: %s", r.name)
+	logp.Debug("indexer", "Start building index for resource: %s", r.Name)
 
 	// number of partition indexer can run simulataneously
 	// is controlled by resource level semaphore
@@ -201,4 +193,13 @@ func (r *Resource) StartEventCollector() {
 // GetEvents returns the event channel for all resource related events
 func (r *Resource) GetEvents() <-chan input.Event {
 	return r.eventChan
+}
+
+// AnnotateSwiftObject add info from indexer to the swift.Object data object
+func (r *Resource) AnnotateSwiftObject(obj *swift.Object) {
+	if r.disk == nil {
+		logp.Critical("AnnotateSwiftObject: BUG: disk reference is nil")
+	}
+	r.disk.AnnotateSwiftObject(obj)
+	obj.Annotate(*r)
 }
