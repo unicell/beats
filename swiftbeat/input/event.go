@@ -23,6 +23,11 @@ var knownObjectFields = []string{
 	"Device",
 }
 
+var str2intObjectFields = []string{
+	"content-length",
+	"partition",
+}
+
 // Event represends the data generated from indexer and to be sent to the output
 type Event interface {
 	ToMapStr() common.MapStr
@@ -62,9 +67,11 @@ func (ev *ObjectEvent) ToMapStr() common.MapStr {
 		event[strings.ToLower(k)] = v.FieldByName(k).String()
 	}
 
-	if v, ok := event["content-length"]; ok {
-		if vInt, err := strconv.ParseInt(v.(string), 10, 64); err == nil {
-			event["content-length"] = vInt
+	for _, k := range str2intObjectFields {
+		if v, ok := event[k]; ok {
+			if vInt, err := strconv.ParseInt(v.(string), 10, 64); err == nil {
+				event[k] = vInt
+			}
 		}
 	}
 
