@@ -13,11 +13,6 @@ import (
 	"github.com/elastic/beats/libbeat/paths"
 )
 
-// Defaults for config variables which are not set
-const (
-	DefaultResourceType = "object"
-)
-
 type Config struct {
 	Prospectors  []*common.Config `config:"prospectors"`
 	SpoolSize    uint64           `config:"spool_size" validate:"min=1"`

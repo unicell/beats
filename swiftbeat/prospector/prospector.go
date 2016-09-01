@@ -1,11 +1,13 @@
 package prospector
 
 import (
-	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"sync"
 	"time"
 
-	cfg "github.com/elastic/beats/swiftbeat/config"
+	//swift "github.com/openstack/swift/go/hummingbird"
+
 	//"github.com/elastic/beats/filebeat/harvester"
 	"github.com/elastic/beats/swiftbeat/input"
 	//"github.com/elastic/beats/filebeat/input/file"
@@ -16,7 +18,7 @@ import (
 type Prospector struct {
 	cfg           *common.Config // Raw config
 	config        prospectorConfig
-	prospectorer  Prospectorer
+	prospectorers []Prospectorer
 	spoolerChan   chan input.Event
 	harvesterChan chan input.Event
 	done          chan struct{}
@@ -25,7 +27,7 @@ type Prospector struct {
 }
 
 type Prospectorer interface {
-	Init()
+	Init() error
 	Run()
 }
 
@@ -54,7 +56,7 @@ func NewProspector(cfg *common.Config, spoolerChan chan input.Event) (*Prospecto
 		return nil, err
 	}
 
-	logp.Debug("prospector", "File Configs: %v", prospector.config.Paths)
+	logp.Debug("prospector", "Device Configs: %v", prospector.config.DeviceDir)
 
 	return prospector, nil
 }
@@ -62,22 +64,29 @@ func NewProspector(cfg *common.Config, spoolerChan chan input.Event) (*Prospecto
 // Init sets up default config for prospector
 func (p *Prospector) Init() error {
 
-	var prospectorer Prospectorer
-	var err error
-
-	switch p.config.ResourceType {
-	case cfg.ObjectResourceType:
-		prospectorer, err = NewProspectorDisk(p)
-	default:
-		return fmt.Errorf("Invalid input type: %v", p.config.ResourceType)
-	}
-
+	files, err := ioutil.ReadDir(p.config.DeviceDir)
 	if err != nil {
+		logp.Err("list dir(%s) failed: %v", p.config.DeviceDir, err)
 		return err
 	}
 
-	prospectorer.Init()
-	p.prospectorer = prospectorer
+	for _, file := range files {
+		path := filepath.Join(p.config.DeviceDir, file.Name())
+		//if mounted, _ := swift.IsMount(path); mounted {
+		prospectorer := NewProspectorDisk(p, path)
+
+		err := prospectorer.Init()
+		if err != nil {
+			logp.Warn("Prospector: failed to initialize prospector for: %s", path)
+			continue
+		}
+
+		p.prospectorers = append(p.prospectorers, prospectorer)
+		//} else {
+		//logp.Warn("Prospector: device path: %s not mounted", path)
+		//continue
+		//}
+	}
 
 	// Create empty harvester to check if configs are fine
 	//_, err = p.createHarvester(file.State{})
@@ -91,7 +100,7 @@ func (p *Prospector) Init() error {
 // Starts scanning through all the file paths and fetch the related files. Start a harvester for each file
 func (p *Prospector) Run() {
 
-	logp.Info("Starting prospector of type: %v", p.config.ResourceType)
+	logp.Info("Starting prospector")
 	p.wg.Add(2)
 	defer p.wg.Done()
 
@@ -121,7 +130,10 @@ func (p *Prospector) Run() {
 	}()
 
 	// Initial prospector run
-	p.prospectorer.Run()
+	for _, prospectorer := range p.prospectorers {
+		prospectorer.Run()
+	}
+
 	// TODO
 	return
 
@@ -132,7 +144,10 @@ func (p *Prospector) Run() {
 			return
 		case <-time.After(p.config.ScanFrequency):
 			logp.Debug("prospector", "Run prospector")
-			p.prospectorer.Run()
+			// TODO
+			for _, prospectorer := range p.prospectorers {
+				prospectorer.Run()
+			}
 		}
 	}
 }

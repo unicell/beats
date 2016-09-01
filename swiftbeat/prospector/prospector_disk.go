@@ -21,22 +21,31 @@ import (
 type ProspectorDisk struct {
 	Prospector *Prospector
 	config     prospectorConfig
+	path       string
 	layout     *indexer.Layout
 	//Indexer    *Indexer
 	//lastClean  time.Time
 }
 
-func NewProspectorDisk(p *Prospector) (*ProspectorDisk, error) {
+func NewProspectorDisk(p *Prospector, path string) *ProspectorDisk {
 
 	prospectorer := &ProspectorDisk{
 		Prospector: p,
 		config:     p.config,
+		path:       path,
 	}
 
-	return prospectorer, nil
+	return prospectorer
 }
 
-func (p *ProspectorDisk) Init() {
+func (p *ProspectorDisk) Init() error {
+
+	layout, err := indexer.NewLayout(p.path, p.Prospector.harvesterChan, p.Prospector.done)
+	if err != nil {
+		return err
+	}
+	p.layout = layout
+
 	//logp.Debug("prospector", "exclude_files: %s", p.config.ExcludeFiles)
 
 	//logp.Info("Load previous states from registry into memory")
@@ -53,6 +62,7 @@ func (p *ProspectorDisk) Init() {
 	//p.lastClean = time.Now()
 
 	//logp.Info("Previous states loaded: %v", p.Prospector.states.Count())
+	return nil
 }
 
 func (p *ProspectorDisk) Run() {
@@ -156,32 +166,22 @@ func (p *ProspectorDisk) getLayout() map[string]os.FileInfo {
 // Scan starts a scanGlob for each provided path/glob
 func (p *ProspectorDisk) scan() {
 
-	var err error
+	p.layout.BuildIndex()
+	p.layout.StartEventCollector()
 
-	for _, path := range p.config.Paths {
-		p.layout, err = indexer.NewLayout(path, p.Prospector.harvesterChan, p.Prospector.done)
-		if err != nil {
-			// skip path that failed to init layout
-			continue
-		}
-
-		p.layout.BuildIndex()
-		p.layout.StartEventCollector()
-
-		go func() {
-			for {
-				select {
-				case <-p.Prospector.done:
-					logp.Info("Prospector disk channel stopped")
-					return
-				case ev := <-p.layout.GetEvents():
-					logp.Debug("event", "--> debug - #3: %s", ev)
-					p.Prospector.spoolerChan <- ev
-				}
-
+	go func() {
+		for {
+			select {
+			case <-p.Prospector.done:
+				logp.Info("Prospector disk channel stopped")
+				return
+			case ev := <-p.layout.GetEvents():
+				logp.Debug("event", "--> debug - #3: %s", ev)
+				p.Prospector.spoolerChan <- ev
 			}
-		}()
-	}
+
+		}
+	}()
 
 	//p.Indexer.BuildIndex()
 	// TODO
