@@ -81,6 +81,7 @@ func (f *Datafile) Parse() {
 	}
 }
 
+// ToSwiftObject creates the swift.Object data object for event publishing
 func (f *Datafile) ToSwiftObject() swift.Object {
 	h := f.hash
 	if h == nil {

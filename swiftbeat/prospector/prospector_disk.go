@@ -18,33 +18,36 @@ import (
 //filesTrucated = expvar.NewInt("filebeat.prospector.log.files.truncated")
 //)
 
-type ProspectorDisk struct {
+type DiskProspector struct {
 	Prospector *Prospector
 	config     prospectorConfig
-	path       string
-	layout     *indexer.Layout
+	devName    string
+	devPath    string
+	disk       *indexer.Disk
 	//Indexer    *Indexer
 	//lastClean  time.Time
 }
 
-func NewProspectorDisk(p *Prospector, path string) *ProspectorDisk {
+func NewDiskProspector(p *Prospector, name string, path string) *DiskProspector {
 
-	prospectorer := &ProspectorDisk{
+	prospectorer := &DiskProspector{
 		Prospector: p,
 		config:     p.config,
-		path:       path,
+		devName:    name,
+		devPath:    path,
 	}
 
 	return prospectorer
 }
 
-func (p *ProspectorDisk) Init() error {
+func (p *DiskProspector) Init() error {
 
-	layout, err := indexer.NewLayout(p.path, p.Prospector.harvesterChan, p.Prospector.done)
+	disk, err := indexer.NewDisk(p.devName, p.devPath,
+		p.Prospector.harvesterChan, p.Prospector.done)
 	if err != nil {
 		return err
 	}
-	p.layout = layout
+	p.disk = disk
 
 	//logp.Debug("prospector", "exclude_files: %s", p.config.ExcludeFiles)
 
@@ -65,7 +68,7 @@ func (p *ProspectorDisk) Init() error {
 	return nil
 }
 
-func (p *ProspectorDisk) Run() {
+func (p *DiskProspector) Run() {
 	logp.Debug("prospector", "Start next scan")
 
 	p.scan()
@@ -115,7 +118,7 @@ func (p *ProspectorDisk) Run() {
 
 // getFiles returns all files which have to be harvested
 // All globs are expanded and then directory and excluded files are removed
-func (p *ProspectorDisk) getLayout() map[string]os.FileInfo {
+func (p *DiskProspector) getLayout() map[string]os.FileInfo {
 
 	paths := map[string]os.FileInfo{}
 
@@ -164,18 +167,18 @@ func (p *ProspectorDisk) getLayout() map[string]os.FileInfo {
 }
 
 // Scan starts a scanGlob for each provided path/glob
-func (p *ProspectorDisk) scan() {
+func (p *DiskProspector) scan() {
 
-	p.layout.BuildIndex()
-	p.layout.StartEventCollector()
+	p.disk.BuildIndex()
+	p.disk.StartEventCollector()
 
 	go func() {
 		for {
 			select {
 			case <-p.Prospector.done:
-				logp.Info("Prospector disk channel stopped")
+				logp.Info("Channel for device prospector stopped")
 				return
-			case ev := <-p.layout.GetEvents():
+			case ev := <-p.disk.GetEvents():
 				logp.Debug("event", "--> debug - #3: %s", ev)
 				p.Prospector.spoolerChan <- ev
 			}
@@ -216,7 +219,7 @@ func (p *ProspectorDisk) scan() {
 }
 
 // harvestExistingFile continues harvesting a file with a known state if needed
-//func (p *ProspectorDisk) harvestExistingFile(newState file.State, oldState file.State) {
+//func (p *DiskProspector) harvestExistingFile(newState file.State, oldState file.State) {
 
 //logp.Debug("prospector", "Update existing file for harvesting: %s, offset: %v", newState.Source, oldState.Offset)
 
@@ -264,7 +267,7 @@ func (p *ProspectorDisk) scan() {
 //}
 
 // isFileExcluded checks if the given path should be excluded
-func (p *ProspectorDisk) isFileExcluded(file string) bool {
+func (p *DiskProspector) isFileExcluded(file string) bool {
 	patterns := p.config.ExcludeFiles
 	// TODO
 	//return len(patterns) > 0 && harvester.MatchAnyRegexps(patterns, file)
@@ -272,7 +275,7 @@ func (p *ProspectorDisk) isFileExcluded(file string) bool {
 }
 
 // isIgnoreOlder checks if the given state reached ignore_older
-//func (p *ProspectorDisk) isIgnoreOlder(state file.State) bool {
+//func (p *DiskProspector) isIgnoreOlder(state file.State) bool {
 
 //// ignore_older is disable
 //if p.config.IgnoreOlder == 0 {

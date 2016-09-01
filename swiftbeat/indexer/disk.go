@@ -12,10 +12,9 @@ import (
 
 // IndexRecord is a struct to be embedded in all indexable structs
 type IndexRecord struct {
-	name       string
-	path       string
-	mtime      time.Time
-	lastSynced time.Time
+	name  string
+	path  string
+	mtime time.Time
 }
 
 // Indexer interface for all level indexable resources
@@ -24,8 +23,8 @@ type Indexer interface {
 	GetEvents() <-chan input.Event
 }
 
-// ResourceLayout is a generic modeling for all 3 types of resources
-type ResourceLayout struct {
+// Resource is a generic modeling for all 3 types of resources
+type Resource struct {
 	*IndexRecord
 	eventChan  chan input.Event
 	sem        Semaphore
@@ -33,26 +32,27 @@ type ResourceLayout struct {
 	partitions []*Partition
 }
 
-// Layout struct represent the top level Swift disk layout
-type Layout struct {
-	accounts   *ResourceLayout
-	containers *ResourceLayout
-	objects    *ResourceLayout
+// Device struct represent the top level Swift disk layout
+type Disk struct {
+	accounts   *Resource
+	containers *Resource
+	objects    *Resource
 }
 
-// NewLayout returns a new Layout object.
-// Layout object initialized with accounts, containers, objects pointing to the
+// NewDisk returns a new Disk object.
+// Disk object initialized with accounts, containers, objects pointing to the
 // respective path
-func NewLayout(
+func NewDisk(
+	name string,
 	path string,
 	eventChan chan input.Event,
 	done chan struct{},
-) (*Layout, error) {
-	logp.Debug("indexer", "Init layout: %s", path)
+) (*Disk, error) {
+	logp.Debug("indexer", "Init Disk: %s", path)
 
-	layout := &Layout{}
+	disk := &Disk{}
 
-	// list layout files
+	// list disk files
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		logp.Err("list dir(%s) failed: %v", path, err)
@@ -67,7 +67,7 @@ func NewLayout(
 
 		fname := file.Name()
 		subpath := filepath.Join(path, fname)
-		resource := &ResourceLayout{
+		resource := &Resource{
 			IndexRecord: &IndexRecord{
 				name: fname,
 				path: subpath,
@@ -80,62 +80,62 @@ func NewLayout(
 
 		switch fname {
 		case "accounts":
-			layout.accounts = resource
+			disk.accounts = resource
 		case "containers":
-			layout.containers = resource
+			disk.containers = resource
 		case "objects":
-			layout.objects = resource
+			disk.objects = resource
 		}
 	}
 
-	return layout, nil
+	return disk, nil
 }
 
 // initResource read and initialize partitions for specified resource
-func initResource(layout *Layout, resource string) {
+func initResource(disk *Disk, resource string) {
 
-	var rl *ResourceLayout
+	var r *Resource
 	var parts PartitionSorter
 
 	switch resource {
 	case "accounts":
-		rl = layout.accounts
+		r = disk.accounts
 	case "containers":
-		rl = layout.containers
+		r = disk.containers
 	case "objects":
-		rl = layout.objects
+		r = disk.objects
 	}
 
-	logp.Debug("indexer", "Init resource: %s", rl.path)
+	logp.Debug("indexer", "Init resource: %s", r.path)
 
-	files, err := ioutil.ReadDir(rl.path)
+	files, err := ioutil.ReadDir(r.path)
 	if err != nil {
-		logp.Err("list dir(%s) failed: %v", rl.path, err)
+		logp.Err("list dir(%s) failed: %v", r.path, err)
 		return
 	}
 
-	parts = rl.partitions
+	parts = r.partitions
 	for _, file := range files {
 		if !file.IsDir() {
 			continue
 		}
-		part, _ := NewPartition(rl, file, rl.done)
+		part, _ := NewPartition(r, file, r.done)
 		parts = append(parts, part)
 	}
 	sort.Sort(parts)
 
 	// set initialized partitions struct back to resource layout object
-	rl.partitions = parts
+	r.partitions = parts
 }
 
-func (l *Layout) init() {
+func (l *Disk) init() {
 	initResource(l, "accounts")
 	initResource(l, "containers")
 	initResource(l, "objects")
 }
 
 // BuildIndex triggers index build recursively on all top level resources
-func (l *Layout) BuildIndex() {
+func (l *Disk) BuildIndex() {
 
 	// load partition list for top level resources
 	l.init()
@@ -147,50 +147,50 @@ func (l *Layout) BuildIndex() {
 }
 
 // TODO: handle accounts/containers as well
-func (l *Layout) StartEventCollector() {
+func (l *Disk) StartEventCollector() {
 	l.objects.StartEventCollector()
 }
 
 // TODO: handle accounts/containers as well
-func (l *Layout) GetEvents() <-chan input.Event {
+func (l *Disk) GetEvents() <-chan input.Event {
 	return l.objects.GetEvents()
 }
 
 // BuildIndex builds index iteratively for all partitions
 // It is a non-blocking call to start index build, however the actual time when
 // it happens depends on the concurrency settings
-func (rl *ResourceLayout) BuildIndex() {
-	logp.Debug("indexer", "Start building index for resource: %s", rl.name)
+func (r *Resource) BuildIndex() {
+	logp.Debug("indexer", "Start building index for resource: %s", r.name)
 
 	// number of partition indexer can run simulataneously
-	// is controlled by rl level semaphore
-	for _, part := range rl.partitions {
+	// is controlled by resource level semaphore
+	for _, part := range r.partitions {
 		go part.BuildIndex()
 	}
 }
 
 // StartEventCollector pumps all events generated under the resource directory
 // through the fan-in channel
-func (rl *ResourceLayout) StartEventCollector() {
+func (r *Resource) StartEventCollector() {
 
-	// redirect event from individual channel to rl indexer level
+	// redirect event from individual channel to resource indexer level
 	output := func(ch <-chan input.Event) {
 		for ev := range ch {
 			select {
 			// TODO: update last tracked record
-			case rl.eventChan <- ev:
-			case <-rl.done:
+			case r.eventChan <- ev:
+			case <-r.done:
 				return
 			}
 		}
 	}
 
-	for _, part := range rl.partitions {
+	for _, part := range r.partitions {
 		go output(part.GetEvents())
 	}
 }
 
 // GetEvents returns the event channel for all resource related events
-func (rl *ResourceLayout) GetEvents() <-chan input.Event {
-	return rl.eventChan
+func (r *Resource) GetEvents() <-chan input.Event {
+	return r.eventChan
 }

@@ -71,9 +71,10 @@ func (p *Prospector) Init() error {
 	}
 
 	for _, file := range files {
-		path := filepath.Join(p.config.DeviceDir, file.Name())
+		name := file.Name()
+		path := filepath.Join(p.config.DeviceDir, name)
 		//if mounted, _ := swift.IsMount(path); mounted {
-		prospectorer := NewProspectorDisk(p, path)
+		prospectorer := NewDiskProspector(p, name, path)
 
 		err := prospectorer.Init()
 		if err != nil {

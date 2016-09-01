@@ -12,7 +12,7 @@ import (
 
 type Partition struct {
 	*IndexRecord
-	rl        *ResourceLayout
+	res       *Resource
 	eventChan chan input.Event
 	done      chan struct{}
 	// TODO: hashes.pkl
@@ -34,17 +34,17 @@ func (parts PartitionSorter) Swap(i, j int) {
 }
 
 func NewPartition(
-	rl *ResourceLayout,
+	res *Resource,
 	file os.FileInfo,
 	done chan struct{},
 ) (*Partition, error) {
 	part := &Partition{
 		IndexRecord: &IndexRecord{
 			name:  file.Name(),
-			path:  filepath.Join(rl.path, file.Name()),
+			path:  filepath.Join(res.path, file.Name()),
 			mtime: file.ModTime(),
 		},
-		rl:        rl,
+		res:       res,
 		eventChan: make(chan input.Event),
 		done:      done,
 		suffixes:  nil,
@@ -81,13 +81,13 @@ func (p *Partition) init() {
 // It is a blocking call and return after finishing index build for all
 // suffixes under the partition
 func (p *Partition) BuildIndex() {
-	defer p.rl.sem.release()
+	defer p.res.sem.release()
 
 	logp.Debug("partition", "Start building index for partition: %s", p.path)
 
 	// limit num of partition indexers can run simultaneously
 	// to avoid heavy IO hit
-	p.rl.sem.acquire()
+	p.res.sem.acquire()
 
 	// load suffix list for the partition
 	p.init()
