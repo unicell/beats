@@ -98,6 +98,11 @@ func (f *Datafile) ToSwiftObject() swift.Object {
 		logp.Critical("ToSwiftObject: BUG: partition reference is nil")
 	}
 
+	if p.res == nil || p.res.disk == nil {
+		logp.Critical("ToSwiftObject: BUG: res or disk reference is nil")
+	}
+	d := p.res.disk
+
 	obj := swift.Object{
 		Name:           f.name,
 		Mtime:          f.mtime,
@@ -109,6 +114,7 @@ func (f *Datafile) ToSwiftObject() swift.Object {
 		PartitionMtime: p.mtime,
 		Metadata:       f.metadata,
 		Path:           f.path,
+		Device:         d.name,
 	}
 	return obj
 }

@@ -26,6 +26,7 @@ type Indexer interface {
 // Resource is a generic modeling for all 3 types of resources
 type Resource struct {
 	*IndexRecord
+	disk       *Disk
 	eventChan  chan input.Event
 	sem        Semaphore
 	done       chan struct{}
@@ -34,6 +35,7 @@ type Resource struct {
 
 // Device struct represent the top level Swift disk layout
 type Disk struct {
+	*IndexRecord
 	accounts   *Resource
 	containers *Resource
 	objects    *Resource
@@ -50,7 +52,12 @@ func NewDisk(
 ) (*Disk, error) {
 	logp.Debug("indexer", "Init Disk: %s", path)
 
-	disk := &Disk{}
+	disk := &Disk{
+		IndexRecord: &IndexRecord{
+			name: name,
+			path: path,
+		},
+	}
 
 	// list disk files
 	files, err := ioutil.ReadDir(path)
@@ -72,6 +79,7 @@ func NewDisk(
 				name: fname,
 				path: subpath,
 			},
+			disk:       disk,
 			eventChan:  eventChan,
 			sem:        NewSemaphore(2),
 			done:       done,

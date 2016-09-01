@@ -2,6 +2,7 @@ package input
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -16,6 +17,10 @@ var knownObjectMetaKey = []string{
 	"X-Object-Meta-Mtime",
 	"X-Timestamp",
 	"ETag",
+}
+
+var knownObjectFields = []string{
+	"Device",
 }
 
 // Event represends the data generated from indexer and to be sent to the output
@@ -44,10 +49,17 @@ func (ev *ObjectEvent) ToMapStr() common.MapStr {
 		"path":       ev.Object.Path,
 	}
 
+	// copy object metadata key / values to event
 	for _, k := range knownObjectMetaKey {
 		if v, ok := ev.Object.Metadata[k]; ok {
 			event[strings.ToLower(k)] = v
 		}
+	}
+
+	// copy object fields to event
+	v := reflect.ValueOf(ev.Object)
+	for _, k := range knownObjectFields {
+		event[strings.ToLower(k)] = v.FieldByName(k).String()
 	}
 
 	if v, ok := event["content-length"]; ok {

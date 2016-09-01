@@ -15,4 +15,5 @@ type Object struct {
 	PartitionMtime time.Time
 	Metadata       map[string]string
 	Path           string
+	Device         string
 }
