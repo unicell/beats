@@ -53,7 +53,7 @@ func NewPartition(
 	return part, nil
 }
 
-func (p *Partition) init() {
+func (p *Partition) init() error {
 	path := p.Path
 	logp.Debug("partition", "Init partition: %s", path)
 
@@ -62,7 +62,7 @@ func (p *Partition) init() {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		logp.Err("list dir(%s) failed: %v", path, err)
-		return
+		return err
 	}
 
 	for _, file := range files {
@@ -76,6 +76,7 @@ func (p *Partition) init() {
 
 	sort.Sort(suffixes)
 	p.suffixes = suffixes
+	return nil
 }
 
 // BuildIndex builds index for one partition
@@ -91,7 +92,10 @@ func (p *Partition) BuildIndex() {
 	p.res.sem.acquire()
 
 	// load suffix list for the partition
-	p.init()
+	err := p.init()
+	if err != nil {
+		return
+	}
 
 	for _, suffix := range p.suffixes {
 		suffix.BuildIndex()

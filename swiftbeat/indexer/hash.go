@@ -53,7 +53,7 @@ func NewHash(
 	return hash, nil
 }
 
-func (h *Hash) init() {
+func (h *Hash) init() error {
 	path := h.Path
 	logp.Debug("hash", "Init hash: %s", path)
 
@@ -62,7 +62,7 @@ func (h *Hash) init() {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		logp.Err("list dir(%s) failed: %v", path, err)
-		return
+		return err
 	}
 
 	for _, file := range files {
@@ -76,6 +76,7 @@ func (h *Hash) init() {
 
 	sort.Sort(dfiles)
 	h.datafiles = dfiles
+	return nil
 }
 
 // BuildIndex builds index for one hash dir
@@ -85,7 +86,10 @@ func (h *Hash) BuildIndex() {
 	logp.Debug("hash", "Start building index for hash: %s", h.Path)
 
 	// load file list for the hash
-	h.init()
+	err := h.init()
+	if err != nil {
+		return
+	}
 
 	for _, dfile := range h.datafiles {
 		dfile.Parse()

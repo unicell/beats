@@ -53,7 +53,7 @@ func NewSuffix(
 	return suffix, nil
 }
 
-func (s *Suffix) init() {
+func (s *Suffix) init() error {
 	path := s.Path
 	logp.Debug("suffix", "Init suffix: %s", path)
 
@@ -62,7 +62,7 @@ func (s *Suffix) init() {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		logp.Err("list dir(%s) failed: %v", path, err)
-		return
+		return err
 	}
 
 	for _, file := range files {
@@ -76,6 +76,7 @@ func (s *Suffix) init() {
 
 	sort.Sort(hashes)
 	s.hashes = hashes
+	return nil
 }
 
 // BuildIndex builds index for one suffix
@@ -85,7 +86,10 @@ func (s *Suffix) BuildIndex() {
 	logp.Debug("suffix", "Start building index for suffix: %s", s.Path)
 
 	// load hash list for the suffix
-	s.init()
+	err := s.init()
+	if err != nil {
+		return
+	}
 
 	for _, hash := range s.hashes {
 		hash.BuildIndex()
