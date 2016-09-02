@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/swiftbeat/input"
@@ -17,7 +19,10 @@ type Partition struct {
 	eventChan chan input.Event
 	done      chan struct{}
 	// TODO: hashes.pkl
-	suffixes []*Suffix
+	suffixes    []*Suffix
+	Handoff     bool
+	PeerDevices []string
+	PeerIps     []string
 }
 
 type PartitionSorter []*Partition
@@ -57,7 +62,18 @@ func (p *Partition) init() error {
 	path := p.Path
 	logp.Debug("partition", "Init partition: %s", path)
 
-	var suffixes SuffixSorter
+	// mark whether current partition on handoff node according to ring data
+	ring := p.res.ring
+	partId, _ := strconv.ParseUint(p.Name, 10, 64)
+
+	nodes, handoff := ring.GetJobNodes(partId, p.res.devId)
+	p.Handoff = handoff
+
+	// add peer device and Ip info
+	for _, n := range nodes {
+		p.PeerDevices = append(p.PeerDevices, n.Device)
+		p.PeerIps = append(p.PeerIps, n.Ip)
+	}
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
@@ -65,6 +81,7 @@ func (p *Partition) init() error {
 		return err
 	}
 
+	var suffixes SuffixSorter
 	for _, file := range files {
 		if !file.IsDir() {
 			continue
@@ -113,5 +130,8 @@ func (p *Partition) AnnotateSwiftObject(obj *swift.Object) {
 		logp.Critical("AnnotateSwiftObject: BUG: res reference is nil")
 	}
 	p.res.AnnotateSwiftObject(obj)
+
 	obj.Annotate(*p)
+	obj.PeerDevices = strings.Join(p.PeerDevices, ",")
+	obj.PeerIps = strings.Join(p.PeerIps, ",")
 }

@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+// Object models all necessary info regarding an object event
+// it can be populated automatically by reflection based on tagging info
+// for fields need special handling can be done in AnnotateXXXObject
 type Object struct {
 	Name           string            `indexer:"Datafile" field:"Name"`
 	Mtime          time.Time         `indexer:"Datafile" field:"Mtime"`
@@ -17,6 +20,10 @@ type Object struct {
 	Metadata       map[string]string `indexer:"Datafile" field:"Metadata"`
 	Path           string            `indexer:"Datafile" field:"Path"`
 	Device         string            `indexer:"Disk" field:"Name"`
+	Handoff        bool              `indexer:"Partition" field:"Handoff"`
+	Ip             string            `indexer:"Resource" field:"Ip"`
+	PeerDevices    string
+	PeerIps        string
 }
 
 // Annotate copies info fields from indexer based on struct tag and reflection

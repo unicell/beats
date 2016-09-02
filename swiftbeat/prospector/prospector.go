@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	//swift "github.com/openstack/swift/go/hummingbird"
-
 	//"github.com/elastic/beats/filebeat/harvester"
 	"github.com/elastic/beats/swiftbeat/input"
 	//"github.com/elastic/beats/filebeat/input/file"
@@ -73,7 +71,6 @@ func (p *Prospector) Init() error {
 	for _, file := range files {
 		name := file.Name()
 		path := filepath.Join(p.config.DeviceDir, name)
-		//if mounted, _ := swift.IsMount(path); mounted {
 		prospectorer := NewDiskProspector(p, name, path)
 
 		err := prospectorer.Init()
@@ -83,10 +80,6 @@ func (p *Prospector) Init() error {
 		}
 
 		p.prospectorers = append(p.prospectorers, prospectorer)
-		//} else {
-		//logp.Warn("Prospector: device path: %s not mounted", path)
-		//continue
-		//}
 	}
 
 	// Create empty harvester to check if configs are fine

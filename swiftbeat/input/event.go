@@ -1,7 +1,6 @@
 package input
 
 import (
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -20,7 +19,13 @@ var knownObjectMetaKey = []string{
 }
 
 var knownObjectFields = []string{
+	"Ip",
 	"Device",
+	"Partition",
+	"Hash",
+	"Path",
+	"PeerDevices",
+	"PeerIps",
 }
 
 var str2intObjectFields = []string{
@@ -49,9 +54,7 @@ func (ev *ObjectEvent) ToMapStr() common.MapStr {
 	event := common.MapStr{
 		"@timestamp": common.Time(ev.Object.Mtime),
 		"type":       "object",
-		"partition":  ev.Object.Partition,
-		"hash":       ev.Object.Hash,
-		"path":       ev.Object.Path,
+		"handoff":    ev.Object.Handoff,
 	}
 
 	// copy object metadata key / values to event
@@ -75,7 +78,6 @@ func (ev *ObjectEvent) ToMapStr() common.MapStr {
 		}
 	}
 
-	event["message"] = fmt.Sprintf("%s", ev.Object.Metadata)
 	return event
 }
 

@@ -2,10 +2,14 @@ package indexer
 
 import (
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
+
+	"github.com/openstack/swift/go/hummingbird"
 
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/swiftbeat/input"
@@ -21,6 +25,9 @@ type Resource struct {
 	sem        Semaphore
 	wg         sync.WaitGroup
 	partitions []*Partition
+	ring       hummingbird.Ring
+	devId      int
+	Ip         string
 }
 
 func NewResource(
@@ -31,6 +38,7 @@ func NewResource(
 ) (*Resource, error) {
 	res := &Resource{
 		IndexRecord: &IndexRecord{
+			// Name also represents the resource type
 			Name:  file.Name(),
 			Path:  filepath.Join(d.Path, file.Name()),
 			Mtime: file.ModTime(),
@@ -40,9 +48,59 @@ func NewResource(
 		done:       done,
 		sem:        NewSemaphore(1),
 		partitions: nil,
+		devId:      -1,
 	}
 	res.wg.Add(1)
 	return res, nil
+}
+
+func (r *Resource) initRing() error {
+
+	// read cluster prefix / suffix from configuration file
+	hashPathPrefix, hashPathSuffix, err := hummingbird.GetHashPrefixAndSuffix()
+	if err != nil {
+		logp.Err("Error getting Swift hash prefix and suffix")
+		return err
+	}
+
+	logp.Info("Swift hash prefix, suffix: %s %s", hashPathPrefix, hashPathSuffix)
+
+	// initialize ring for the resource type
+	// TODO: add multi policy support
+	// remove trailing 's' for resource type
+	ringType := r.Name[:len(r.Name)-1]
+	ring, err := hummingbird.GetRing(ringType, hashPathPrefix, hashPathSuffix, 0)
+	if err != nil {
+		logp.Err("Error reading the %s ring", ringType)
+		return err
+	}
+	r.ring = ring
+	r.initDevInfo()
+
+	return nil
+}
+
+// init Dev Id and IP based on ring lookup with local IP and device name
+func (r *Resource) initDevInfo() {
+
+	var localIPs = make(map[string]bool)
+
+	localAddrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return
+	}
+	for _, addr := range localAddrs {
+		localIPs[strings.Split(addr.String(), "/")[0]] = true
+	}
+
+	devs := r.ring.AllDevices()
+	for _, dev := range devs {
+		if localIPs[dev.Ip] && dev.Device == r.disk.Name {
+			r.devId = dev.Id
+			r.Ip = dev.Ip
+			break
+		}
+	}
 }
 
 func (r *Resource) init() error {
@@ -51,14 +109,20 @@ func (r *Resource) init() error {
 	path := r.Path
 	logp.Debug("resource", "Init resource: %s", path)
 
-	var parts PartitionSorter
+	err := r.initRing()
+	if err != nil {
+		logp.Err("Failed to init ring data")
+		return err
+	}
 
+	// load partitions for the resource type
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		logp.Err("list dir(%s) failed: %v", path, err)
 		return err
 	}
 
+	var parts PartitionSorter
 	for _, file := range files {
 		if !file.IsDir() {
 			continue
