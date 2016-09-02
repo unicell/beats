@@ -79,20 +79,30 @@ func (d *Disk) BuildIndex() {
 	}
 
 	// TODO: properly handle relation between resources
+	//if d.accounts != nil {
 	//go d.accounts.BuildIndex()
+	//}
+	//if d.containers != nil {
 	//go d.containers.BuildIndex()
-	go d.objects.BuildIndex()
+	//}
+	if d.objects != nil {
+		go d.objects.BuildIndex()
+	}
 }
 
 // TODO: handle accounts/containers as well
 func (d *Disk) StartEventCollector() {
-	d.objects.Wait()
-	d.objects.StartEventCollector()
+	if d.objects != nil {
+		d.objects.StartEventCollector()
+	}
 }
 
 // TODO: handle accounts/containers as well
 func (d *Disk) GetEvents() <-chan input.Event {
-	return d.objects.GetEvents()
+	if d.objects != nil {
+		return d.objects.GetEvents()
+	}
+	return make(chan input.Event)
 }
 
 // AnnotateSwiftObject add info from indexer to the swift.Object data object

@@ -137,11 +137,6 @@ func (r *Resource) init() error {
 	return nil
 }
 
-// Wait blocks until the resource is ready to collect events
-func (r *Resource) Wait() {
-	r.wg.Wait()
-}
-
 // BuildIndex builds index iteratively for all partitions
 // It is a non-blocking call to start index build, however the actual time when
 // it happens depends on the concurrency settings
@@ -164,6 +159,9 @@ func (r *Resource) BuildIndex() {
 // StartEventCollector pumps all events generated under the resource directory
 // through the fan-in channel
 func (r *Resource) StartEventCollector() {
+
+	// Wait blocks until the resource is ready to collect events
+	r.wg.Wait()
 
 	// redirect event from individual channel to resource indexer level
 	output := func(ch <-chan input.Event) {

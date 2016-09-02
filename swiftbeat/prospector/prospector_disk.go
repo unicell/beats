@@ -179,7 +179,6 @@ func (p *DiskProspector) scan() {
 				logp.Info("Channel for device prospector stopped")
 				return
 			case ev := <-p.disk.GetEvents():
-				logp.Debug("event", "--> debug - #3: %s", ev)
 				p.Prospector.spoolerChan <- ev
 			}
 
