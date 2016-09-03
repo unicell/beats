@@ -1,9 +1,6 @@
 package prospector
 
 import (
-	"os"
-	//"time"
-
 	//"expvar"
 
 	//"github.com/elastic/beats/filebeat/harvester"
@@ -116,56 +113,6 @@ func (p *DiskProspector) Run() {
 	//}
 }
 
-// getFiles returns all files which have to be harvested
-// All globs are expanded and then directory and excluded files are removed
-func (p *DiskProspector) getLayout() map[string]os.FileInfo {
-
-	paths := map[string]os.FileInfo{}
-
-	//for _, file := range files {
-	//fmt.Println(file.Name())
-	//}
-
-	//// Evaluate the path as a wildcards/shell glob
-	//matches, err := filepath.Glob(glob)
-	//if err != nil {
-	//logp.Err("glob(%s) failed: %v", glob, err)
-	//continue
-	//}
-
-	//// Check any matched files to see if we need to start a harvester
-	//for _, file := range matches {
-
-	//// check if the file is in the exclude_files list
-	//if p.isFileExcluded(file) {
-	//logp.Debug("prospector", "Exclude file: %s", file)
-	//continue
-	//}
-
-	//fileinfo, err := os.Lstat(file)
-	//if err != nil {
-	//logp.Debug("prospector", "stat(%s) failed: %s", file, err)
-	//continue
-	//}
-
-	//// Check if file is symlink
-	//if fileinfo.Mode()&os.ModeSymlink != 0 {
-	//logp.Debug("prospector", "File %s skipped as it is a symlink.", file)
-	//continue
-	//}
-
-	////if fileinfo.IsDir() {
-	////logp.Debug("prospector", "Skipping directory: %s", file)
-	////continue
-	////}
-
-	//paths[file] = fileinfo
-	//}
-	//}
-
-	return paths
-}
-
 // Scan starts a scanGlob for each provided path/glob
 func (p *DiskProspector) scan() {
 
@@ -176,7 +123,7 @@ func (p *DiskProspector) scan() {
 		for {
 			select {
 			case <-p.Prospector.done:
-				logp.Info("Channel for device prospector stopped")
+				logp.Info("Exiting from Disk prospector")
 				return
 			case ev := <-p.disk.GetEvents():
 				p.Prospector.spoolerChan <- ev

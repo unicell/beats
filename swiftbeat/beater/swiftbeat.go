@@ -54,6 +54,11 @@ func (sb *Swiftbeat) Run(b *beat.Beat) error {
 
 	// TODO
 	registrarChan := make(chan []input.Event, 1)
+	go func() {
+		for {
+			<-registrarChan
+		}
+	}()
 	// Publishes event to output
 	publisher := publish.New(config.PublishAsync,
 		publisherChan, registrarChan, b.Publisher)

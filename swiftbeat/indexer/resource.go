@@ -170,6 +170,7 @@ func (r *Resource) StartEventCollector() {
 			// TODO: update last tracked record
 			case r.eventChan <- ev:
 			case <-r.done:
+				logp.Info("Exiting from resource event collector")
 				return
 			}
 		}
