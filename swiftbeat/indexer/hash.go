@@ -14,8 +14,6 @@ import (
 type Hash struct {
 	*IndexRecord
 	*Suffix
-	eventChan chan input.Event
-	done      chan struct{}
 	datafiles []*Datafile
 }
 
@@ -36,8 +34,6 @@ func (hashes HashSorter) Swap(i, j int) {
 func NewHash(
 	s *Suffix,
 	file os.FileInfo,
-	eventChan chan input.Event,
-	done chan struct{},
 ) (*Hash, error) {
 	hash := &Hash{
 		IndexRecord: &IndexRecord{
@@ -46,8 +42,6 @@ func NewHash(
 			Mtime: file.ModTime(),
 		},
 		Suffix:    s,
-		eventChan: eventChan,
-		done:      done,
 		datafiles: nil,
 	}
 	return hash, nil

@@ -7,16 +7,13 @@ import (
 	"sort"
 
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/elastic/beats/swiftbeat/input"
 	"github.com/elastic/beats/swiftbeat/input/swift"
 )
 
 type Suffix struct {
 	*IndexRecord
 	*Partition
-	eventChan chan input.Event
-	done      chan struct{}
-	hashes    []*Hash
+	hashes []*Hash
 }
 
 type SuffixSorter []*Suffix
@@ -36,8 +33,6 @@ func (suffixes SuffixSorter) Swap(i, j int) {
 func NewSuffix(
 	p *Partition,
 	file os.FileInfo,
-	eventChan chan input.Event,
-	done chan struct{},
 ) (*Suffix, error) {
 	suffix := &Suffix{
 		IndexRecord: &IndexRecord{
@@ -46,8 +41,6 @@ func NewSuffix(
 			Mtime: file.ModTime(),
 		},
 		Partition: p,
-		eventChan: eventChan,
-		done:      done,
 		hashes:    nil,
 	}
 	return suffix, nil
@@ -70,7 +63,7 @@ func (s *Suffix) init() error {
 			continue
 		}
 
-		hash, _ := NewHash(s, file, s.eventChan, s.done)
+		hash, _ := NewHash(s, file)
 		hashes = append(hashes, hash)
 	}
 

@@ -20,8 +20,6 @@ import (
 type Resource struct {
 	*IndexRecord
 	*Disk
-	eventChan  chan input.Event
-	done       chan struct{}
 	sem        Semaphore
 	wg         sync.WaitGroup
 	partitions []*Partition
@@ -33,8 +31,6 @@ type Resource struct {
 func NewResource(
 	d *Disk,
 	file os.FileInfo,
-	eventChan chan input.Event,
-	done chan struct{},
 ) (*Resource, error) {
 	res := &Resource{
 		IndexRecord: &IndexRecord{
@@ -44,8 +40,6 @@ func NewResource(
 			Mtime: file.ModTime(),
 		},
 		Disk:       d,
-		eventChan:  eventChan,
-		done:       done,
 		sem:        NewSemaphore(1),
 		partitions: nil,
 		devId:      -1,
@@ -128,7 +122,7 @@ func (r *Resource) init() error {
 			continue
 		}
 
-		part, _ := NewPartition(r, file, r.done)
+		part, _ := NewPartition(r, file)
 		parts = append(parts, part)
 	}
 

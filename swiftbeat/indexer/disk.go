@@ -55,7 +55,7 @@ func (d *Disk) init() error {
 			continue
 		}
 
-		res, _ := NewResource(d, file, d.eventChan, d.done)
+		res, _ := NewResource(d, file)
 
 		switch file.Name() {
 		case "accounts":

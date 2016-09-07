@@ -16,8 +16,6 @@ import (
 type Partition struct {
 	*IndexRecord
 	*Resource
-	eventChan chan input.Event
-	done      chan struct{}
 	// TODO: hashes.pkl
 	suffixes    []*Suffix
 	Handoff     bool
@@ -42,7 +40,6 @@ func (parts PartitionSorter) Swap(i, j int) {
 func NewPartition(
 	res *Resource,
 	file os.FileInfo,
-	done chan struct{},
 ) (*Partition, error) {
 	part := &Partition{
 		IndexRecord: &IndexRecord{
@@ -50,10 +47,8 @@ func NewPartition(
 			Path:  filepath.Join(res.Path, file.Name()),
 			Mtime: file.ModTime(),
 		},
-		Resource:  res,
-		eventChan: make(chan input.Event),
-		done:      done,
-		suffixes:  nil,
+		Resource: res,
+		suffixes: nil,
 	}
 	return part, nil
 }
@@ -87,7 +82,7 @@ func (p *Partition) init() error {
 			continue
 		}
 
-		suffix, _ := NewSuffix(p, file, p.eventChan, p.done)
+		suffix, _ := NewSuffix(p, file)
 		suffixes = append(suffixes, suffix)
 	}
 

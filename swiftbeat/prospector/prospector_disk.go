@@ -117,7 +117,7 @@ func (p *DiskProspector) Run() {
 func (p *DiskProspector) scan() {
 
 	p.disk.BuildIndex()
-	p.disk.StartEventCollector()
+	//p.disk.StartEventCollector()
 
 	go func() {
 		for {
@@ -132,7 +132,6 @@ func (p *DiskProspector) scan() {
 		}
 	}()
 
-	//p.Indexer.BuildIndex()
 	// TODO
 	//for path, info := range p.getFiles() {
 	//for path := range p.getLayout() {
@@ -211,14 +210,6 @@ func (p *DiskProspector) scan() {
 //logp.Debug("prospector", "File didn't change: %s", newState.Source)
 //}
 //}
-
-// isFileExcluded checks if the given path should be excluded
-func (p *DiskProspector) isFileExcluded(file string) bool {
-	patterns := p.config.ExcludeFiles
-	// TODO
-	//return len(patterns) > 0 && harvester.MatchAnyRegexps(patterns, file)
-	return len(patterns) > 0
-}
 
 // isIgnoreOlder checks if the given state reached ignore_older
 //func (p *DiskProspector) isIgnoreOlder(state file.State) bool {
