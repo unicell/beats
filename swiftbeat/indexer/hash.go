@@ -13,7 +13,7 @@ import (
 
 type Hash struct {
 	*IndexRecord
-	suffix    *Suffix
+	*Suffix
 	eventChan chan input.Event
 	done      chan struct{}
 	datafiles []*Datafile
@@ -45,7 +45,7 @@ func NewHash(
 			Path:  filepath.Join(s.Path, file.Name()),
 			Mtime: file.ModTime(),
 		},
-		suffix:    s,
+		Suffix:    s,
 		eventChan: eventChan,
 		done:      done,
 		datafiles: nil,
@@ -104,9 +104,9 @@ func (h *Hash) BuildIndex() {
 
 // AnnotateSwiftObject add info from indexer to the swift.Object data object
 func (h *Hash) AnnotateSwiftObject(obj *swift.Object) {
-	if h.suffix == nil {
+	if h.Suffix == nil {
 		logp.Critical("AnnotateSwiftObject: BUG: suffix reference is nil")
 	}
-	h.suffix.AnnotateSwiftObject(obj)
+	h.Suffix.AnnotateSwiftObject(obj)
 	obj.Annotate(*h)
 }

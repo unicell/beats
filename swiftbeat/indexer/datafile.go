@@ -20,7 +20,7 @@ const (
 
 type Datafile struct {
 	*IndexRecord
-	hash *Hash
+	*Hash
 	// for simplicity, store both kv in string
 	// and convert if necessary when use
 	Metadata map[string]string
@@ -51,7 +51,7 @@ func NewDatafile(
 			Path:  filepath.Join(h.Path, file.Name()),
 			Mtime: file.ModTime(),
 		},
-		hash:     h,
+		Hash:     h,
 		Metadata: map[string]string{},
 	}
 	return dfile, nil
@@ -83,10 +83,10 @@ func (f *Datafile) Parse() {
 
 // AnnotateSwiftObject add info from indexer to the swift.Object data object
 func (f *Datafile) AnnotateSwiftObject(obj *swift.Object) {
-	if f.hash == nil {
+	if f.Hash == nil {
 		logp.Critical("AnnotateSwiftObject: BUG: hash reference is nil")
 	}
-	f.hash.AnnotateSwiftObject(obj)
+	f.Hash.AnnotateSwiftObject(obj)
 	obj.Annotate(*f)
 }
 

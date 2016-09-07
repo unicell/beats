@@ -13,7 +13,7 @@ import (
 
 type Suffix struct {
 	*IndexRecord
-	part      *Partition
+	*Partition
 	eventChan chan input.Event
 	done      chan struct{}
 	hashes    []*Hash
@@ -45,7 +45,7 @@ func NewSuffix(
 			Path:  filepath.Join(p.Path, file.Name()),
 			Mtime: file.ModTime(),
 		},
-		part:      p,
+		Partition: p,
 		eventChan: eventChan,
 		done:      done,
 		hashes:    nil,
@@ -98,9 +98,9 @@ func (s *Suffix) BuildIndex() {
 
 // AnnotateSwiftObject add info from indexer to the swift.Object data object
 func (s *Suffix) AnnotateSwiftObject(obj *swift.Object) {
-	if s.part == nil {
+	if s.Partition == nil {
 		logp.Critical("AnnotateSwiftObject: BUG: partition reference is nil")
 	}
-	s.part.AnnotateSwiftObject(obj)
+	s.Partition.AnnotateSwiftObject(obj)
 	obj.Annotate(*s)
 }

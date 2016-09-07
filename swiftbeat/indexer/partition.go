@@ -15,7 +15,7 @@ import (
 
 type Partition struct {
 	*IndexRecord
-	res       *Resource
+	*Resource
 	eventChan chan input.Event
 	done      chan struct{}
 	// TODO: hashes.pkl
@@ -50,7 +50,7 @@ func NewPartition(
 			Path:  filepath.Join(res.Path, file.Name()),
 			Mtime: file.ModTime(),
 		},
-		res:       res,
+		Resource:  res,
 		eventChan: make(chan input.Event),
 		done:      done,
 		suffixes:  nil,
@@ -63,10 +63,10 @@ func (p *Partition) init() error {
 	logp.Debug("partition", "Init partition: %s", path)
 
 	// mark whether current partition on handoff node according to ring data
-	ring := p.res.ring
+	ring := p.Resource.ring
 	partId, _ := strconv.ParseUint(p.Name, 10, 64)
 
-	nodes, handoff := ring.GetJobNodes(partId, p.res.devId)
+	nodes, handoff := ring.GetJobNodes(partId, p.Resource.devId)
 	p.Handoff = handoff
 
 	// add peer device and Ip info
@@ -100,13 +100,13 @@ func (p *Partition) init() error {
 // It is a blocking call and return after finishing index build for all
 // suffixes under the partition
 func (p *Partition) BuildIndex() {
-	defer p.res.sem.release()
+	defer p.Resource.sem.release()
 
 	logp.Debug("partition", "Start building index for partition: %s", p.Path)
 
 	// limit num of partition indexers can run simultaneously
 	// to avoid heavy IO hit
-	p.res.sem.acquire()
+	p.Resource.sem.acquire()
 
 	// load suffix list for the partition
 	err := p.init()
@@ -126,10 +126,10 @@ func (p *Partition) GetEvents() <-chan input.Event {
 
 // AnnotateSwiftObject add info from indexer to the swift.Object data object
 func (p *Partition) AnnotateSwiftObject(obj *swift.Object) {
-	if p.res == nil {
+	if p.Resource == nil {
 		logp.Critical("AnnotateSwiftObject: BUG: res reference is nil")
 	}
-	p.res.AnnotateSwiftObject(obj)
+	p.Resource.AnnotateSwiftObject(obj)
 
 	obj.Annotate(*p)
 	obj.PeerDevices = strings.Join(p.PeerDevices, ",")

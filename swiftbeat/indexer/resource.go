@@ -19,7 +19,7 @@ import (
 // Resource is a generic modeling for all 3 types of resources
 type Resource struct {
 	*IndexRecord
-	disk       *Disk
+	*Disk
 	eventChan  chan input.Event
 	done       chan struct{}
 	sem        Semaphore
@@ -43,7 +43,7 @@ func NewResource(
 			Path:  filepath.Join(d.Path, file.Name()),
 			Mtime: file.ModTime(),
 		},
-		disk:       d,
+		Disk:       d,
 		eventChan:  eventChan,
 		done:       done,
 		sem:        NewSemaphore(1),
@@ -95,7 +95,7 @@ func (r *Resource) initDevInfo() {
 
 	devs := r.ring.AllDevices()
 	for _, dev := range devs {
-		if localIPs[dev.Ip] && dev.Device == r.disk.Name {
+		if localIPs[dev.Ip] && dev.Device == r.Disk.Name {
 			r.devId = dev.Id
 			r.Ip = dev.Ip
 			break
@@ -188,9 +188,9 @@ func (r *Resource) GetEvents() <-chan input.Event {
 
 // AnnotateSwiftObject add info from indexer to the swift.Object data object
 func (r *Resource) AnnotateSwiftObject(obj *swift.Object) {
-	if r.disk == nil {
+	if r.Disk == nil {
 		logp.Critical("AnnotateSwiftObject: BUG: disk reference is nil")
 	}
-	r.disk.AnnotateSwiftObject(obj)
+	r.Disk.AnnotateSwiftObject(obj)
 	obj.Annotate(*r)
 }
