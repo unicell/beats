@@ -9,6 +9,12 @@ import (
 	"github.com/elastic/beats/swiftbeat/input/swift"
 )
 
+// Event represends the data generated from indexer and to be sent to the output
+type Event interface {
+	ToMapStr() common.MapStr
+	Bytes() int
+}
+
 var knownObjectMetaKey = []string{
 	"name",
 	"Content-Type",
@@ -31,12 +37,6 @@ var knownObjectFields = []string{
 var str2intObjectFields = []string{
 	"content-length",
 	"partition",
-}
-
-// Event represends the data generated from indexer and to be sent to the output
-type Event interface {
-	ToMapStr() common.MapStr
-	Bytes() int
 }
 
 type ObjectEvent struct {
@@ -82,5 +82,41 @@ func (ev *ObjectEvent) ToMapStr() common.MapStr {
 }
 
 func (ev *ObjectEvent) Bytes() int {
+	return 1
+}
+
+type PartitionEvent struct {
+	common.EventMetadata
+	Partition swift.Partition
+}
+
+func NewPartitionEvent(partition swift.Partition) *PartitionEvent {
+	return &PartitionEvent{
+		Partition: partition,
+	}
+}
+
+func (ev *PartitionEvent) ToMapStr() common.MapStr {
+	partInt := int64(-1)
+	if i, err := strconv.ParseInt(ev.Partition.Name, 10, 64); err == nil {
+		partInt = i
+	}
+
+	event := common.MapStr{
+		"@timestamp":     common.Time(ev.Partition.Mtime),
+		"type":           "partition",
+		"device":         ev.Partition.Device,
+		"partition":      partInt,
+		"handoff":        ev.Partition.Handoff,
+		"num_datafiles":  ev.Partition.NumDatafiles,
+		"num_tomestones": ev.Partition.NumTomstones,
+		"peer_devices":   ev.Partition.PeerDevices,
+		"peer_ips":       ev.Partition.PeerIps,
+	}
+
+	return event
+}
+
+func (ev *PartitionEvent) Bytes() int {
 	return 1
 }

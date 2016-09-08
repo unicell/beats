@@ -17,10 +17,12 @@ type Partition struct {
 	*IndexRecord
 	*Resource
 	// TODO: hashes.pkl
-	suffixes    []*Suffix
-	Handoff     bool
-	PeerDevices []string
-	PeerIps     []string
+	suffixes      []*Suffix
+	Handoff       bool
+	PeerDevices   []string
+	PeerIps       []string
+	NumDatafiles  int64
+	NumTomestones int64
 }
 
 type PartitionSorter []*Partition
@@ -47,8 +49,10 @@ func NewPartition(
 			Path:  filepath.Join(res.Path, file.Name()),
 			Mtime: file.ModTime(),
 		},
-		Resource: res,
-		suffixes: nil,
+		Resource:      res,
+		suffixes:      nil,
+		NumDatafiles:  0,
+		NumTomestones: 0,
 	}
 	return part, nil
 }
@@ -112,6 +116,11 @@ func (p *Partition) BuildIndex() {
 	for _, suffix := range p.suffixes {
 		suffix.BuildIndex()
 	}
+
+	if p.config.EnablePartitionIndex {
+		event := input.NewPartitionEvent(p.ToSwiftPartition())
+		p.eventChan <- event
+	}
 }
 
 // GetEvents returns the event channel for all partition related events
@@ -127,6 +136,27 @@ func (p *Partition) AnnotateSwiftObject(obj *swift.Object) {
 	p.Resource.AnnotateSwiftObject(obj)
 
 	obj.Annotate(*p)
+
 	obj.PeerDevices = strings.Join(p.PeerDevices, ",")
 	obj.PeerIps = strings.Join(p.PeerIps, ",")
+}
+
+// AnnotateSwiftPartition add info from indexer to the swift.Partition data object
+func (p *Partition) AnnotateSwiftPartition(part *swift.Partition) {
+	if p.Resource == nil {
+		logp.Critical("AnnotateSwiftPartition: BUG: res reference is nil")
+	}
+	p.Resource.AnnotateSwiftPartition(part)
+
+	part.Annotate(*p)
+
+	part.PeerDevices = strings.Join(p.PeerDevices, ",")
+	part.PeerIps = strings.Join(p.PeerIps, ",")
+}
+
+// ToSwiftPartition creates annotated swift.Partition data object for event publishing
+func (p *Partition) ToSwiftPartition() swift.Partition {
+	swiftPart := &swift.Partition{}
+	p.AnnotateSwiftPartition(swiftPart)
+	return *swiftPart
 }

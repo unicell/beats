@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/elastic/beats/swiftbeat/input"
-	"github.com/elastic/beats/swiftbeat/input/swift"
 )
 
 // IndexRecord is a struct to be embedded in all indexable structs
@@ -18,5 +17,4 @@ type IndexRecord struct {
 type Indexer interface {
 	BuildIndex()
 	GetEvents() <-chan input.Event
-	AnnotateSwiftObject(obj *swift.Object)
 }

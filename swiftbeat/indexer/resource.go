@@ -188,3 +188,12 @@ func (r *Resource) AnnotateSwiftObject(obj *swift.Object) {
 	r.Disk.AnnotateSwiftObject(obj)
 	obj.Annotate(*r)
 }
+
+// AnnotateSwiftPartition add info from indexer to the swift.Partition data object
+func (r *Resource) AnnotateSwiftPartition(part *swift.Partition) {
+	if r.Disk == nil {
+		logp.Critical("AnnotateSwiftPartition: BUG: disk reference is nil")
+	}
+	r.Disk.AnnotateSwiftPartition(part)
+	part.Annotate(*r)
+}

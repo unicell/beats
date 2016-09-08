@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/swiftbeat/input"
@@ -73,6 +74,33 @@ func (h *Hash) init() error {
 	return nil
 }
 
+func (h *Hash) buildPartitionIndex() {
+	if len(h.datafiles) <= 0 {
+		return
+	}
+
+	// sort in descedent mtime order
+	file := h.datafiles[0]
+	// everything inside a partition is serialized
+	if strings.HasSuffix(file.Name, ".data") {
+		h.Partition.NumDatafiles += 1
+	} else if strings.HasSuffix(file.Name, ".ts") {
+		h.Partition.NumTomestones += 1
+	}
+}
+
+func (h *Hash) buildDatafileIndex() {
+	for _, dfile := range h.datafiles {
+		dfile.Parse()
+
+		event := input.NewObjectEvent(dfile.ToSwiftObject())
+		h.eventChan <- event
+
+		logp.Debug("datafile", "Event generated for %s - Dump %s",
+			dfile.Path, dfile.Metadata)
+	}
+}
+
 // BuildIndex builds index for one hash dir
 // It is a blocking call and return after finishing index build for all
 // datafiles under the hash dir
@@ -85,14 +113,12 @@ func (h *Hash) BuildIndex() {
 		return
 	}
 
-	for _, dfile := range h.datafiles {
-		dfile.Parse()
+	if h.config.EnablePartitionIndex {
+		h.buildPartitionIndex()
+	}
 
-		event := input.NewObjectEvent(dfile.ToSwiftObject())
-		h.eventChan <- event
-
-		logp.Debug("datafile", "Event generated for %s - Dump %s",
-			dfile.Path, dfile.Metadata)
+	if h.config.EnableDatafileIndex {
+		h.buildDatafileIndex()
 	}
 }
 

@@ -11,6 +11,7 @@ import (
 // Device struct represent the top level Swift disk layout
 type Disk struct {
 	*IndexRecord
+	config     indexerConfig
 	eventChan  chan input.Event
 	done       chan struct{}
 	accounts   *Resource
@@ -32,6 +33,7 @@ func NewDisk(
 			Name: name,
 			Path: path,
 		},
+		config:    defaultConfig,
 		eventChan: eventChan,
 		done:      done,
 	}
@@ -108,4 +110,9 @@ func (d *Disk) GetEvents() <-chan input.Event {
 // AnnotateSwiftObject add info from indexer to the swift.Object data object
 func (d *Disk) AnnotateSwiftObject(obj *swift.Object) {
 	obj.Annotate(*d)
+}
+
+// AnnotateSwiftPartition add info from indexer to the swift.Partition data object
+func (d *Disk) AnnotateSwiftPartition(part *swift.Partition) {
+	part.Annotate(*d)
 }
