@@ -54,9 +54,9 @@ func NewPartition(
 		},
 		Resource:      res,
 		suffixes:      nil,
-		NumDatafiles:  0,
-		NumTomestones: 0,
-		BytesTotal:    0,
+		NumDatafiles:  -1,
+		NumTomestones: -1,
+		BytesTotal:    -1,
 	}
 	return part, nil
 }
@@ -76,6 +76,11 @@ func (p *Partition) init() error {
 	for _, n := range nodes {
 		p.PeerDevices = append(p.PeerDevices, n.Device)
 		p.PeerIps = append(p.PeerIps, n.Ip)
+	}
+
+	// skip non-handoff node if IndexHandoffOnly turned on to speedup
+	if p.config.IndexHandoffOnly && (!p.Handoff) {
+		return nil
 	}
 
 	files, err := ioutil.ReadDir(path)
@@ -117,8 +122,10 @@ func (p *Partition) BuildIndex() {
 		return
 	}
 
-	for _, suffix := range p.suffixes {
-		suffix.BuildIndex()
+	if !p.config.IndexHandoffOnly || (p.config.IndexHandoffOnly && p.Handoff) {
+		for _, suffix := range p.suffixes {
+			suffix.BuildIndex()
+		}
 	}
 	p.LastIndexed = time.Now()
 
@@ -157,7 +164,11 @@ func (p *Partition) AnnotateSwiftPartition(part *swift.Partition) {
 
 	part.PeerDevices = strings.Join(p.PeerDevices, ",")
 	part.PeerIps = strings.Join(p.PeerIps, ",")
-	part.BytesMBTotal = int64(p.BytesTotal / 1024 / 1024)
+	if p.BytesTotal == -1 {
+		part.BytesMBTotal = -1
+	} else {
+		part.BytesMBTotal = int64(p.BytesTotal / 1024 / 1024)
+	}
 }
 
 // ToSwiftPartition creates annotated swift.Partition data object for event publishing
