@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/swiftbeat/input"
@@ -23,6 +24,8 @@ type Partition struct {
 	PeerIps       []string
 	NumDatafiles  int64
 	NumTomestones int64
+	BytesTotal    int64
+	LastIndexed   time.Time
 }
 
 type PartitionSorter []*Partition
@@ -53,6 +56,7 @@ func NewPartition(
 		suffixes:      nil,
 		NumDatafiles:  0,
 		NumTomestones: 0,
+		BytesTotal:    0,
 	}
 	return part, nil
 }
@@ -116,6 +120,7 @@ func (p *Partition) BuildIndex() {
 	for _, suffix := range p.suffixes {
 		suffix.BuildIndex()
 	}
+	p.LastIndexed = time.Now()
 
 	if p.config.EnablePartitionIndex {
 		event := input.NewPartitionEvent(p.ToSwiftPartition())
@@ -152,6 +157,7 @@ func (p *Partition) AnnotateSwiftPartition(part *swift.Partition) {
 
 	part.PeerDevices = strings.Join(p.PeerDevices, ",")
 	part.PeerIps = strings.Join(p.PeerIps, ",")
+	part.BytesMBTotal = int64(p.BytesTotal / 1024 / 1024)
 }
 
 // ToSwiftPartition creates annotated swift.Partition data object for event publishing

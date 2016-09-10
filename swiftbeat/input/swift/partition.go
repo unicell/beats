@@ -11,12 +11,16 @@ import (
 type Partition struct {
 	Name         string    `indexer:"Partition" field:"Name"`
 	Mtime        time.Time `indexer:"Partition" field:"Mtime"`
+	LastIndexed  time.Time `indexer:"Partition" field:"LastIndexed"`
 	Device       string    `indexer:"Disk" field:"Name"`
+	Ip           string    `indexer:"Resource" field:"Ip"`
+	RingMtime    time.Time `indexer:"Resource" field:"RingMtime"`
 	NumDatafiles int64     `indexer:"Partition" field:"NumDatafiles"`
 	NumTomstones int64     `indexer:"Partition" field:"NumTomestones"`
 	Handoff      bool      `indexer:"Partition" field:"Handoff"`
 	PeerDevices  string
 	PeerIps      string
+	BytesMBTotal int64
 }
 
 // Annotate copies info fields from indexer based on struct tag and reflection

@@ -1,6 +1,7 @@
 package indexer
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/openstack/swift/go/hummingbird"
 
@@ -24,6 +26,7 @@ type Resource struct {
 	wg         sync.WaitGroup
 	partitions []*Partition
 	ring       hummingbird.Ring
+	RingMtime  time.Time
 	devId      int
 	Ip         string
 }
@@ -70,6 +73,12 @@ func (r *Resource) initRing() error {
 	}
 	r.ring = ring
 	r.initDevInfo()
+
+	// probe ring mtime since it is not exposed in Hummingbird
+	ringPath := fmt.Sprintf("/etc/swift/%s.ring.gz", ringType)
+	if f, err := os.Stat(ringPath); err == nil {
+		r.RingMtime = f.ModTime()
+	}
 
 	return nil
 }

@@ -84,6 +84,7 @@ func (h *Hash) buildPartitionIndex() {
 	// everything inside a partition is serialized
 	if strings.HasSuffix(file.Name, ".data") {
 		h.Partition.NumDatafiles += 1
+		h.Partition.BytesTotal += file.Size
 	} else if strings.HasSuffix(file.Name, ".ts") {
 		h.Partition.NumTomestones += 1
 	}

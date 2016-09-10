@@ -106,12 +106,16 @@ func (ev *PartitionEvent) ToMapStr() common.MapStr {
 		"@timestamp":     common.Time(ev.Partition.Mtime),
 		"type":           "partition",
 		"device":         ev.Partition.Device,
+		"ip":             ev.Partition.Ip,
+		"ring_mtime":     common.Time(ev.Partition.RingMtime),
 		"partition":      partInt,
 		"handoff":        ev.Partition.Handoff,
 		"num_datafiles":  ev.Partition.NumDatafiles,
 		"num_tomestones": ev.Partition.NumTomstones,
+		"bytes_total_mb": ev.Partition.BytesMBTotal,
 		"peer_devices":   ev.Partition.PeerDevices,
 		"peer_ips":       ev.Partition.PeerIps,
+		"last_indexed":   common.Time(ev.Partition.LastIndexed),
 	}
 
 	return event

@@ -21,6 +21,7 @@ const (
 type Datafile struct {
 	*IndexRecord
 	*Hash
+	Size int64
 	// for simplicity, store both kv in string
 	// and convert if necessary when use
 	Metadata map[string]string
@@ -51,6 +52,7 @@ func NewDatafile(
 			Path:  filepath.Join(h.Path, file.Name()),
 			Mtime: file.ModTime(),
 		},
+		Size:     file.Size(),
 		Hash:     h,
 		Metadata: map[string]string{},
 	}
