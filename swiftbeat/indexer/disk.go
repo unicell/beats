@@ -93,18 +93,15 @@ func (d *Disk) BuildIndex() {
 }
 
 // TODO: handle accounts/containers as well
+// XXX: deprecated
 func (d *Disk) StartEventCollector() {
 	if d.objects != nil {
 		d.objects.StartEventCollector()
 	}
 }
 
-// TODO: handle accounts/containers as well
 func (d *Disk) GetEvents() <-chan input.Event {
-	if d.objects != nil {
-		return d.objects.GetEvents()
-	}
-	return make(chan input.Event)
+	return d.eventChan
 }
 
 // AnnotateSwiftObject add info from indexer to the swift.Object data object

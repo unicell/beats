@@ -15,7 +15,7 @@ import (
 type Hash struct {
 	*IndexRecord
 	*Suffix
-	datafiles []*Datafile
+	files []*IndexableFile
 }
 
 type HashSorter []*Hash
@@ -42,8 +42,8 @@ func NewHash(
 			Path:  filepath.Join(s.Path, file.Name()),
 			Mtime: file.ModTime(),
 		},
-		Suffix:    s,
-		datafiles: nil,
+		Suffix: s,
+		files:  nil,
 	}
 	return hash, nil
 }
@@ -52,7 +52,7 @@ func (h *Hash) init() error {
 	path := h.Path
 	logp.Debug("hash", "Init hash: %s", path)
 
-	var dfiles DatafileSorter
+	var ifiles IndexableFileSorter
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
@@ -65,22 +65,22 @@ func (h *Hash) init() error {
 			continue
 		}
 
-		dfile, _ := NewDatafile(h, file)
-		dfiles = append(dfiles, dfile)
+		ifile, _ := NewIndexableFile(h, file)
+		ifiles = append(ifiles, ifile)
 	}
 
-	sort.Sort(dfiles)
-	h.datafiles = dfiles
+	sort.Sort(ifiles)
+	h.files = ifiles
 	return nil
 }
 
-func (h *Hash) buildPartitionIndex() {
-	if len(h.datafiles) <= 0 {
+func (h *Hash) buildObjectPartitionIndex() {
+	if len(h.files) <= 0 {
 		return
 	}
 
 	// sort in descedent mtime order
-	file := h.datafiles[0]
+	file := h.files[0]
 	// everything inside a partition is serialized
 	if strings.HasSuffix(file.Name, ".data") {
 		h.Partition.NumDatafiles += 1
@@ -91,8 +91,12 @@ func (h *Hash) buildPartitionIndex() {
 }
 
 func (h *Hash) buildDatafileIndex() {
-	for _, dfile := range h.datafiles {
-		dfile.Parse()
+	for _, file := range h.files {
+		if !strings.HasSuffix(file.Name, ".data") {
+			return
+		}
+		dfile, _ := NewDatafile(file)
+		dfile.Index()
 
 		event := input.NewObjectEvent(dfile.ToSwiftObject())
 		h.eventChan <- event
@@ -103,8 +107,8 @@ func (h *Hash) buildDatafileIndex() {
 }
 
 // BuildIndex builds index for one hash dir
-// It is a blocking call and return after finishing index build for all
-// datafiles under the hash dir
+// It is a blocking call and only return after finishing index build for all
+// data under the hash dir
 func (h *Hash) BuildIndex() {
 	logp.Debug("hash", "Start building index for hash: %s", h.Path)
 
@@ -114,12 +118,16 @@ func (h *Hash) BuildIndex() {
 		return
 	}
 
-	if h.config.EnablePartitionIndex {
-		h.buildPartitionIndex()
-	}
+	if h.Type == "object" {
+		if h.config.EnableObjectPartitionIndex {
+			h.buildObjectPartitionIndex()
+		}
 
-	if h.config.EnableDatafileIndex {
-		h.buildDatafileIndex()
+		if h.config.EnableDatafileIndex {
+			h.buildDatafileIndex()
+		}
+	} else if h.Type == "container" {
+		//h.buildContainerDBIndex()
 	}
 }
 

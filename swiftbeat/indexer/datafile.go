@@ -2,8 +2,6 @@ package indexer
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
 	"syscall"
 
 	pickle "github.com/hydrogen18/stalecucumber"
@@ -19,48 +17,25 @@ const (
 )
 
 type Datafile struct {
-	*IndexRecord
-	*Hash
-	Size int64
+	*IndexableFile
 	// for simplicity, store both kv in string
 	// and convert if necessary when use
 	Metadata map[string]string
 }
 
-type DatafileSorter []*Datafile
-
-func (dfiles DatafileSorter) Len() int {
-	return len(dfiles)
-}
-
-func (dfiles DatafileSorter) Less(i, j int) bool {
-	return dfiles[i].Mtime.After(dfiles[j].Mtime)
-}
-
-func (dfiles DatafileSorter) Swap(i, j int) {
-	dfiles[i], dfiles[j] = dfiles[j], dfiles[i]
-}
-
 // NewDatafile returns a new Datafile object
 func NewDatafile(
-	h *Hash,
-	file os.FileInfo,
+	f *IndexableFile,
 ) (*Datafile, error) {
 	dfile := &Datafile{
-		IndexRecord: &IndexRecord{
-			Name:  file.Name(),
-			Path:  filepath.Join(h.Path, file.Name()),
-			Mtime: file.ModTime(),
-		},
-		Size:     file.Size(),
-		Hash:     h,
-		Metadata: map[string]string{},
+		IndexableFile: f,
+		Metadata:      map[string]string{},
 	}
 	return dfile, nil
 }
 
-// Parse individual datafile to fill in structured data
-func (f *Datafile) Parse() {
+// Index individual datafile to fill in structured data
+func (f *Datafile) Index() {
 	buf := make([]byte, xattrBufSize)
 
 	// read from xattr

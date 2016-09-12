@@ -78,8 +78,9 @@ func (p *Partition) init() error {
 		p.PeerIps = append(p.PeerIps, n.Ip)
 	}
 
-	// skip non-handoff node if IndexHandoffOnly turned on to speedup
-	if p.config.IndexHandoffOnly && (!p.Handoff) {
+	// skip non-handoff node if ObjectIndexHandoffOnly turned on to speedup
+	if p.Resource.Type == "object" &&
+		p.config.ObjectIndexHandoffOnly && (!p.Handoff) {
 		// to differentiate non-indexed vs indexed with zero value
 		p.NumDatafiles = -1
 		p.NumTomestones = -1
@@ -108,6 +109,18 @@ func (p *Partition) init() error {
 	return nil
 }
 
+func (p *Partition) buildSuffixIndex() {
+	// only index suffix dirs when needed
+	if p.Resource.Type == "object" &&
+		p.config.ObjectIndexHandoffOnly && (!p.Handoff) {
+		return
+	}
+
+	for _, suffix := range p.suffixes {
+		suffix.BuildIndex()
+	}
+}
+
 // BuildIndex builds index for one partition
 // It is a blocking call and return after finishing index build for all
 // suffixes under the partition
@@ -126,20 +139,17 @@ func (p *Partition) BuildIndex() {
 		return
 	}
 
-	if !p.config.IndexHandoffOnly || (p.config.IndexHandoffOnly && p.Handoff) {
-		for _, suffix := range p.suffixes {
-			suffix.BuildIndex()
-		}
-	}
+	p.buildSuffixIndex()
 	p.LastIndexed = time.Now()
 
-	if p.config.EnablePartitionIndex {
+	if p.Resource.Type == "object" && p.config.EnableObjectPartitionIndex {
 		event := input.NewPartitionEvent(p.ToSwiftPartition())
 		p.eventChan <- event
 	}
 }
 
 // GetEvents returns the event channel for all partition related events
+// XXX: deprecated
 func (p *Partition) GetEvents() <-chan input.Event {
 	return p.eventChan
 }

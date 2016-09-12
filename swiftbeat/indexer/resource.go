@@ -162,6 +162,7 @@ func (r *Resource) BuildIndex() {
 
 // StartEventCollector pumps all events generated under the resource directory
 // through the fan-in channel
+// XXX: deprecated
 func (r *Resource) StartEventCollector() {
 
 	// Wait blocks until the resource is ready to collect events
@@ -186,6 +187,7 @@ func (r *Resource) StartEventCollector() {
 }
 
 // GetEvents returns the event channel for all resource related events
+// XXX: deprecated
 func (r *Resource) GetEvents() <-chan input.Event {
 	return r.eventChan
 }

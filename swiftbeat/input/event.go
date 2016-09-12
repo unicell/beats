@@ -1,7 +1,6 @@
 package input
 
 import (
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -24,16 +23,6 @@ var knownObjectMetaKey = []string{
 	"ETag",
 }
 
-var knownObjectFields = []string{
-	"Ip",
-	"Device",
-	"Partition",
-	"Hash",
-	"Path",
-	"PeerDevices",
-	"PeerIps",
-}
-
 var str2intObjectFields = []string{
 	"content-length",
 	"partition",
@@ -52,9 +41,16 @@ func NewObjectEvent(object swift.Object) *ObjectEvent {
 
 func (ev *ObjectEvent) ToMapStr() common.MapStr {
 	event := common.MapStr{
-		"@timestamp": common.Time(ev.Object.Mtime),
-		"type":       "object",
-		"handoff":    ev.Object.Handoff,
+		"@timestamp":   common.Time(ev.Object.Mtime),
+		"type":         "object",
+		"handoff":      ev.Object.Handoff,
+		"device":       ev.Object.Device,
+		"ip":           ev.Object.Ip,
+		"partition":    ev.Object.Partition,
+		"hash":         ev.Object.Hash,
+		"path":         ev.Object.Path,
+		"peer_devices": ev.Object.PeerDevices,
+		"peer_ips":     ev.Object.PeerIps,
 	}
 
 	// copy object metadata key / values to event
@@ -62,12 +58,6 @@ func (ev *ObjectEvent) ToMapStr() common.MapStr {
 		if v, ok := ev.Object.Metadata[k]; ok {
 			event[strings.ToLower(k)] = v
 		}
-	}
-
-	// copy object fields to event
-	v := reflect.ValueOf(ev.Object)
-	for _, k := range knownObjectFields {
-		event[strings.ToLower(k)] = v.FieldByName(k).String()
 	}
 
 	for _, k := range str2intObjectFields {
