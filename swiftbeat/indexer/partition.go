@@ -54,9 +54,9 @@ func NewPartition(
 		},
 		Resource:      res,
 		suffixes:      nil,
-		NumDatafiles:  -1,
-		NumTomestones: -1,
-		BytesTotal:    -1,
+		NumDatafiles:  0,
+		NumTomestones: 0,
+		BytesTotal:    0,
 	}
 	return part, nil
 }
@@ -80,6 +80,10 @@ func (p *Partition) init() error {
 
 	// skip non-handoff node if IndexHandoffOnly turned on to speedup
 	if p.config.IndexHandoffOnly && (!p.Handoff) {
+		// to differentiate non-indexed vs indexed with zero value
+		p.NumDatafiles = -1
+		p.NumTomestones = -1
+		p.BytesTotal = -1
 		return nil
 	}
 

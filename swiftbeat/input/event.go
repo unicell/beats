@@ -105,6 +105,7 @@ func (ev *PartitionEvent) ToMapStr() common.MapStr {
 	event := common.MapStr{
 		"@timestamp":     common.Time(ev.Partition.Mtime),
 		"type":           "partition",
+		"resource_type":  ev.Partition.ResourceType,
 		"device":         ev.Partition.Device,
 		"ip":             ev.Partition.Ip,
 		"ring_mtime":     common.Time(ev.Partition.RingMtime),

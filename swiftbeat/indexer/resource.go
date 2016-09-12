@@ -22,6 +22,7 @@ import (
 type Resource struct {
 	*IndexRecord
 	*Disk
+	Type       string
 	sem        Semaphore
 	wg         sync.WaitGroup
 	partitions []*Partition
@@ -47,6 +48,8 @@ func NewResource(
 		partitions: nil,
 		devId:      -1,
 	}
+	// remove trailing 's' for resource type
+	res.Type = res.Name[:len(res.Name)-1]
 	res.wg.Add(1)
 	return res, nil
 }
@@ -64,18 +67,16 @@ func (r *Resource) initRing() error {
 
 	// initialize ring for the resource type
 	// TODO: add multi policy support
-	// remove trailing 's' for resource type
-	ringType := r.Name[:len(r.Name)-1]
-	ring, err := hummingbird.GetRing(ringType, hashPathPrefix, hashPathSuffix, 0)
+	ring, err := hummingbird.GetRing(r.Type, hashPathPrefix, hashPathSuffix, 0)
 	if err != nil {
-		logp.Err("Error reading the %s ring", ringType)
+		logp.Err("Error reading the %s ring", r.Type)
 		return err
 	}
 	r.ring = ring
 	r.initDevInfo()
 
 	// probe ring mtime since it is not exposed in Hummingbird
-	ringPath := fmt.Sprintf("/etc/swift/%s.ring.gz", ringType)
+	ringPath := fmt.Sprintf("/etc/swift/%s.ring.gz", r.Type)
 	if f, err := os.Stat(ringPath); err == nil {
 		r.RingMtime = f.ModTime()
 	}

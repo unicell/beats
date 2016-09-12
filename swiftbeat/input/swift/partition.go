@@ -12,6 +12,7 @@ type Partition struct {
 	Name         string    `indexer:"Partition" field:"Name"`
 	Mtime        time.Time `indexer:"Partition" field:"Mtime"`
 	LastIndexed  time.Time `indexer:"Partition" field:"LastIndexed"`
+	ResourceType string    `indexer:"Resource" field:"Type"`
 	Device       string    `indexer:"Disk" field:"Name"`
 	Ip           string    `indexer:"Resource" field:"Ip"`
 	RingMtime    time.Time `indexer:"Resource" field:"RingMtime"`
