@@ -80,10 +80,10 @@ func (d *Disk) BuildIndex() {
 		return
 	}
 
-	if d.accounts != nil {
+	if d.config.EnableAccountIndex && d.accounts != nil {
 		go d.accounts.BuildIndex()
 	}
-	if d.containers != nil {
+	if d.config.EnableContainerIndex && d.containers != nil {
 		go d.containers.BuildIndex()
 	}
 	if d.objects != nil {
