@@ -28,7 +28,8 @@ type Resource struct {
 	partitions []*Partition
 	ring       hummingbird.Ring
 	RingMtime  time.Time
-	devId      int
+	DevName    string
+	DevId      int
 	Ip         string
 }
 
@@ -46,7 +47,8 @@ func NewResource(
 		Disk:       d,
 		sem:        NewSemaphore(1),
 		partitions: nil,
-		devId:      -1,
+		DevName:    d.Name,
+		DevId:      -1,
 	}
 	// remove trailing 's' for resource type
 	res.Type = res.Name[:len(res.Name)-1]
@@ -99,8 +101,8 @@ func (r *Resource) initDevInfo() {
 
 	devs := r.ring.AllDevices()
 	for _, dev := range devs {
-		if localIPs[dev.Ip] && dev.Device == r.Disk.Name {
-			r.devId = dev.Id
+		if localIPs[dev.Ip] && dev.Device == r.DevName {
+			r.DevId = dev.Id
 			r.Ip = dev.Ip
 			break
 		}

@@ -33,6 +33,18 @@
 			"revisionTime": "2016-07-09T11:51:41Z"
 		},
 		{
+			"checksumSHA1": "+Q4ES3lJVAIyCcVVRXAfAJ57910=",
+			"path": "github.com/mattn/go-sqlite3",
+			"revision": "3fb7a0e792edd47bf0cf1e919dfc14e2be412e15",
+			"revisionTime": "2016-09-07T16:20:43Z"
+		},
+		{
+			"checksumSHA1": "vUcHzx0aV5Vid+r3FyGE1Y7QkHs=",
+			"path": "github.com/mattn/go-sqlite3/sqlite3_test",
+			"revision": "3fb7a0e792edd47bf0cf1e919dfc14e2be412e15",
+			"revisionTime": "2016-09-07T16:20:43Z"
+		},
+		{
 			"checksumSHA1": "7NA4JORxDKOuLTl0WI/vgTd52z4=",
 			"path": "github.com/openstack/swift",
 			"revision": "1ab2a296f58ae76aeffef9f3f0fb90e15358be27",

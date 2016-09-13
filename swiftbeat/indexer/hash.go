@@ -95,6 +95,7 @@ func (h *Hash) buildDatafileIndex() {
 		if !strings.HasSuffix(file.Name, ".data") {
 			return
 		}
+
 		dfile, _ := NewDatafile(file)
 		dfile.Index()
 
@@ -103,6 +104,20 @@ func (h *Hash) buildDatafileIndex() {
 
 		logp.Debug("datafile", "Event generated for %s - Dump %s",
 			dfile.Path, dfile.Metadata)
+	}
+}
+
+func (h *Hash) buildContainerDBIndex() {
+	for _, file := range h.files {
+		if !strings.HasSuffix(file.Name, ".db") {
+			return
+		}
+
+		dbfile, _ := NewContainerDBfile(file)
+		dbfile.Index()
+
+		event := input.NewContainerEvent(dbfile.ToSwiftContainer())
+		h.eventChan <- event
 	}
 }
 
@@ -127,7 +142,7 @@ func (h *Hash) BuildIndex() {
 			h.buildDatafileIndex()
 		}
 	} else if h.Type == "container" {
-		//h.buildContainerDBIndex()
+		h.buildContainerDBIndex()
 	}
 }
 

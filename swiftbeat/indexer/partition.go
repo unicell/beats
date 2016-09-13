@@ -26,6 +26,7 @@ type Partition struct {
 	NumTomestones int64
 	BytesTotal    int64
 	LastIndexed   time.Time
+	PartId        int64
 }
 
 type PartitionSorter []*Partition
@@ -57,7 +58,13 @@ func NewPartition(
 		NumDatafiles:  0,
 		NumTomestones: 0,
 		BytesTotal:    0,
+		PartId:        -1,
 	}
+
+	if i, err := strconv.ParseInt(part.Name, 10, 64); err == nil {
+		part.PartId = i
+	}
+
 	return part, nil
 }
 
@@ -67,9 +74,8 @@ func (p *Partition) init() error {
 
 	// mark whether current partition on handoff node according to ring data
 	ring := p.Resource.ring
-	partId, _ := strconv.ParseUint(p.Name, 10, 64)
 
-	nodes, handoff := ring.GetJobNodes(partId, p.Resource.devId)
+	nodes, handoff := ring.GetJobNodes(uint64(p.PartId), p.Resource.DevId)
 	p.Handoff = handoff
 
 	// add peer device and Ip info

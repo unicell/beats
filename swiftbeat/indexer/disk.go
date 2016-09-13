@@ -84,9 +84,9 @@ func (d *Disk) BuildIndex() {
 	//if d.accounts != nil {
 	//go d.accounts.BuildIndex()
 	//}
-	//if d.containers != nil {
-	//go d.containers.BuildIndex()
-	//}
+	if d.containers != nil {
+		go d.containers.BuildIndex()
+	}
 	if d.objects != nil {
 		go d.objects.BuildIndex()
 	}
