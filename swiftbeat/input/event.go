@@ -127,8 +127,11 @@ func (ev *ContainerEvent) ToMapStr() common.MapStr {
 	event := common.MapStr{
 		"@timestamp":    common.Time(ev.Container.Mtime),
 		"type":          "db",
+		"path":          ev.Container.Path,
+		"db_size_kb":    ev.Container.SizeKB,
 		"account":       ev.Container.Account,
 		"container":     ev.Container.Container,
+		"status":        ev.Container.Status,
 		"object_count":  ev.Container.ObjectCount,
 		"bytes_used_mb": ev.Container.BytesUsedMB,
 		"policy_index":  ev.Container.PolicyIndex,
