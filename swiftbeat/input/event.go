@@ -152,3 +152,44 @@ func (ev *ContainerEvent) ToMapStr() common.MapStr {
 func (ev *ContainerEvent) Bytes() int {
 	return 1
 }
+
+type AccountEvent struct {
+	common.EventMetadata
+	Account swift.Account
+}
+
+func NewAccountEvent(account swift.Account) *AccountEvent {
+	return &AccountEvent{
+		Account: account,
+	}
+}
+
+func (ev *AccountEvent) ToMapStr() common.MapStr {
+
+	event := common.MapStr{
+		"@timestamp":      common.Time(ev.Account.Mtime),
+		"type":            "db",
+		"path":            ev.Account.Path,
+		"db_size_kb":      ev.Account.SizeKB,
+		"account":         ev.Account.Account,
+		"status":          ev.Account.Status,
+		"container_count": ev.Account.ContainerCount,
+		"object_count":    ev.Account.ObjectCount,
+		"bytes_used_mb":   ev.Account.BytesUsedMB,
+		"last_indexed":    common.Time(ev.Account.LastIndexed),
+		"resource_type":   ev.Account.ResourceType,
+		"partition":       ev.Account.Partition,
+		"device":          ev.Account.Device,
+		"ip":              ev.Account.Ip,
+		"ring_mtime":      common.Time(ev.Account.RingMtime),
+		"handoff":         ev.Account.Handoff,
+		"peer_devices":    ev.Account.PeerDevices,
+		"peer_ips":        ev.Account.PeerIps,
+	}
+
+	return event
+}
+
+func (ev *AccountEvent) Bytes() int {
+	return 1
+}

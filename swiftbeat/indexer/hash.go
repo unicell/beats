@@ -107,17 +107,27 @@ func (h *Hash) buildDatafileIndex() {
 	}
 }
 
-func (h *Hash) buildContainerDBIndex() {
+func (h *Hash) buildDBIndex() {
+	var event input.Event
 	for _, file := range h.files {
 		if !strings.HasSuffix(file.Name, ".db") {
 			return
 		}
+		event = nil
 
-		dbfile, _ := NewContainerDBfile(file)
-		dbfile.Index()
+		if h.Type == "container" {
+			dbfile, _ := NewContainerDBfile(file)
+			dbfile.Index()
+			event = input.NewContainerEvent(dbfile.ToSwiftContainer())
+		} else if h.Type == "account" {
+			dbfile, _ := NewAccountDBfile(file)
+			dbfile.Index()
+			event = input.NewAccountEvent(dbfile.ToSwiftAccount())
+		}
 
-		event := input.NewContainerEvent(dbfile.ToSwiftContainer())
-		h.eventChan <- event
+		if event != nil {
+			h.eventChan <- event
+		}
 	}
 }
 
@@ -141,8 +151,8 @@ func (h *Hash) BuildIndex() {
 		if h.config.EnableDatafileIndex {
 			h.buildDatafileIndex()
 		}
-	} else if h.Type == "container" {
-		h.buildContainerDBIndex()
+	} else if h.Type == "container" || h.Type == "account" {
+		h.buildDBIndex()
 	}
 }
 

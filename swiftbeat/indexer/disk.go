@@ -80,10 +80,9 @@ func (d *Disk) BuildIndex() {
 		return
 	}
 
-	// TODO: properly handle relation between resources
-	//if d.accounts != nil {
-	//go d.accounts.BuildIndex()
-	//}
+	if d.accounts != nil {
+		go d.accounts.BuildIndex()
+	}
 	if d.containers != nil {
 		go d.containers.BuildIndex()
 	}
