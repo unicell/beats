@@ -23,7 +23,7 @@ type Partition struct {
 	PeerDevices   []string
 	PeerIps       []string
 	NumDatafiles  int64
-	NumTomestones int64
+	NumTombstones int64
 	BytesTotal    int64
 	LastIndexed   time.Time
 	PartId        int64
@@ -56,7 +56,7 @@ func NewPartition(
 		Resource:      res,
 		suffixes:      nil,
 		NumDatafiles:  0,
-		NumTomestones: 0,
+		NumTombstones: 0,
 		BytesTotal:    0,
 		PartId:        -1,
 	}
@@ -89,7 +89,7 @@ func (p *Partition) init() error {
 		p.config.ObjectIndexHandoffOnly && (!p.Handoff) {
 		// to differentiate non-indexed vs indexed with zero value
 		p.NumDatafiles = -1
-		p.NumTomestones = -1
+		p.NumTombstones = -1
 		p.BytesTotal = -1
 		return nil
 	}
@@ -173,27 +173,30 @@ func (p *Partition) AnnotateSwiftObject(obj *swift.Object) {
 	obj.PeerIps = strings.Join(p.PeerIps, ",")
 }
 
-// AnnotateSwiftPartition add info from indexer to the swift.Partition data object
-func (p *Partition) AnnotateSwiftPartition(part *swift.Partition) {
-	if p.Resource == nil {
-		logp.Critical("AnnotateSwiftPartition: BUG: res reference is nil")
-	}
-	p.Resource.AnnotateSwiftPartition(part)
-
-	part.Annotate(*p)
-
-	part.PeerDevices = strings.Join(p.PeerDevices, ",")
-	part.PeerIps = strings.Join(p.PeerIps, ",")
-	if p.BytesTotal == -1 {
-		part.BytesMBTotal = -1
-	} else {
-		part.BytesMBTotal = int64(p.BytesTotal / 1024 / 1024)
-	}
-}
-
 // ToSwiftPartition creates annotated swift.Partition data object for event publishing
 func (p *Partition) ToSwiftPartition() swift.Partition {
-	swiftPart := &swift.Partition{}
-	p.AnnotateSwiftPartition(swiftPart)
-	return *swiftPart
+	var bytesTotalMB int64
+	if p.BytesTotal == -1 {
+		bytesTotalMB = -1
+	} else {
+		bytesTotalMB = int64(p.BytesTotal / 1024 / 1024)
+	}
+
+	swiftPart := swift.Partition{
+		PartId:        p.PartId,
+		Mtime:         p.Mtime,
+		NumDatafiles:  p.NumDatafiles,
+		NumTombstones: p.NumTombstones,
+		BytesTotalMB:  bytesTotalMB,
+		LastIndexed:   p.LastIndexed,
+		// fields inherited from parents
+		ResourceType: p.Type,
+		Device:       p.DevName,
+		Ip:           p.Ip,
+		RingMtime:    p.RingMtime,
+		Handoff:      p.Handoff,
+		PeerDevices:  strings.Join(p.PeerDevices, ","),
+		PeerIps:      strings.Join(p.PeerIps, ","),
+	}
+	return swiftPart
 }

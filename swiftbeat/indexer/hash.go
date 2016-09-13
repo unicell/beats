@@ -86,7 +86,7 @@ func (h *Hash) buildObjectPartitionIndex() {
 		h.Partition.NumDatafiles += 1
 		h.Partition.BytesTotal += file.Size
 	} else if strings.HasSuffix(file.Name, ".ts") {
-		h.Partition.NumTomestones += 1
+		h.Partition.NumTombstones += 1
 	}
 }
 

@@ -87,26 +87,21 @@ func NewPartitionEvent(partition swift.Partition) *PartitionEvent {
 }
 
 func (ev *PartitionEvent) ToMapStr() common.MapStr {
-	partInt := int64(-1)
-	if i, err := strconv.ParseInt(ev.Partition.Name, 10, 64); err == nil {
-		partInt = i
-	}
-
 	event := common.MapStr{
 		"@timestamp":     common.Time(ev.Partition.Mtime),
 		"type":           "partition",
+		"partition":      ev.Partition.PartId,
+		"num_datafiles":  ev.Partition.NumDatafiles,
+		"num_tombstones": ev.Partition.NumTombstones,
+		"bytes_total_mb": ev.Partition.BytesTotalMB,
+		"last_indexed":   common.Time(ev.Partition.LastIndexed),
 		"resource_type":  ev.Partition.ResourceType,
 		"device":         ev.Partition.Device,
 		"ip":             ev.Partition.Ip,
 		"ring_mtime":     common.Time(ev.Partition.RingMtime),
-		"partition":      partInt,
 		"handoff":        ev.Partition.Handoff,
-		"num_datafiles":  ev.Partition.NumDatafiles,
-		"num_tomestones": ev.Partition.NumTomstones,
-		"bytes_total_mb": ev.Partition.BytesMBTotal,
 		"peer_devices":   ev.Partition.PeerDevices,
 		"peer_ips":       ev.Partition.PeerIps,
-		"last_indexed":   common.Time(ev.Partition.LastIndexed),
 	}
 
 	return event

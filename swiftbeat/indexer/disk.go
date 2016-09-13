@@ -108,8 +108,3 @@ func (d *Disk) GetEvents() <-chan input.Event {
 func (d *Disk) AnnotateSwiftObject(obj *swift.Object) {
 	obj.Annotate(*d)
 }
-
-// AnnotateSwiftPartition add info from indexer to the swift.Partition data object
-func (d *Disk) AnnotateSwiftPartition(part *swift.Partition) {
-	part.Annotate(*d)
-}
