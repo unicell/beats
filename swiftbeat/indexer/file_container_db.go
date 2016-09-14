@@ -101,6 +101,7 @@ func (f *ContainerDBfile) ToSwiftContainer() swift.Container {
 		Ip:           f.Ip,
 		RingMtime:    f.RingMtime,
 		Handoff:      f.Handoff,
+		ReplicaId:    f.ReplicaId,
 		PeerDevices:  strings.Join(f.PeerDevices, ","),
 		PeerIps:      strings.Join(f.PeerIps, ","),
 	}

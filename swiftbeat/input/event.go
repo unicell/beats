@@ -100,6 +100,7 @@ func (ev *PartitionEvent) ToMapStr() common.MapStr {
 		"ip":             ev.Partition.Ip,
 		"ring_mtime":     common.Time(ev.Partition.RingMtime),
 		"handoff":        ev.Partition.Handoff,
+		"replica_id":     ev.Partition.ReplicaId,
 		"peer_devices":   ev.Partition.PeerDevices,
 		"peer_ips":       ev.Partition.PeerIps,
 	}
@@ -142,6 +143,7 @@ func (ev *ContainerEvent) ToMapStr() common.MapStr {
 		"ip":            ev.Container.Ip,
 		"ring_mtime":    common.Time(ev.Container.RingMtime),
 		"handoff":       ev.Container.Handoff,
+		"replica_id":    ev.Container.ReplicaId,
 		"peer_devices":  ev.Container.PeerDevices,
 		"peer_ips":      ev.Container.PeerIps,
 	}
@@ -183,6 +185,7 @@ func (ev *AccountEvent) ToMapStr() common.MapStr {
 		"ip":              ev.Account.Ip,
 		"ring_mtime":      common.Time(ev.Account.RingMtime),
 		"handoff":         ev.Account.Handoff,
+		"replica_id":      ev.Account.ReplicaId,
 		"peer_devices":    ev.Account.PeerDevices,
 		"peer_ips":        ev.Account.PeerIps,
 	}

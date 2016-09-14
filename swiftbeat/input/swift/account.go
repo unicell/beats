@@ -21,6 +21,7 @@ type Account struct {
 	Ip             string
 	RingMtime      time.Time
 	Handoff        bool
+	ReplicaId      int64
 	PeerDevices    string
 	PeerIps        string
 }

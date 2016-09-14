@@ -27,6 +27,7 @@ type Partition struct {
 	BytesTotal    int64
 	LastIndexed   time.Time
 	PartId        int64
+	ReplicaId     int64
 }
 
 type PartitionSorter []*Partition
@@ -59,6 +60,7 @@ func NewPartition(
 		NumTombstones: 0,
 		BytesTotal:    0,
 		PartId:        -1,
+		ReplicaId:     -1,
 	}
 
 	if i, err := strconv.ParseInt(part.Name, 10, 64); err == nil {
@@ -82,6 +84,17 @@ func (p *Partition) init() error {
 	for _, n := range nodes {
 		p.PeerDevices = append(p.PeerDevices, n.Device)
 		p.PeerIps = append(p.PeerIps, n.Ip)
+	}
+
+	// get replica index number in on primary node
+	if !handoff {
+		nodesInOrder := ring.GetNodesInOrder(uint64(p.PartId))
+		for i, n := range nodesInOrder {
+			if n.Id == p.Resource.DevId {
+				p.ReplicaId = int64(i)
+				break
+			}
+		}
 	}
 
 	// skip non-handoff node if ObjectIndexHandoffOnly turned on to speedup
@@ -195,6 +208,7 @@ func (p *Partition) ToSwiftPartition() swift.Partition {
 		Ip:           p.Ip,
 		RingMtime:    p.RingMtime,
 		Handoff:      p.Handoff,
+		ReplicaId:    p.ReplicaId,
 		PeerDevices:  strings.Join(p.PeerDevices, ","),
 		PeerIps:      strings.Join(p.PeerIps, ","),
 	}
