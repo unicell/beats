@@ -17,7 +17,7 @@ const (
 )
 
 type Datafile struct {
-	*IndexableFile
+	*FileRecord
 	// for simplicity, store both kv in string
 	// and convert if necessary when use
 	Metadata map[string]string
@@ -25,11 +25,11 @@ type Datafile struct {
 
 // NewDatafile returns a new Datafile object
 func NewDatafile(
-	f *IndexableFile,
+	f *FileRecord,
 ) (*Datafile, error) {
 	dfile := &Datafile{
-		IndexableFile: f,
-		Metadata:      map[string]string{},
+		FileRecord: f,
+		Metadata:   map[string]string{},
 	}
 	return dfile, nil
 }

@@ -15,7 +15,7 @@ import (
 type Hash struct {
 	*IndexRecord
 	*Suffix
-	files []*IndexableFile
+	files []*FileRecord
 }
 
 type HashSorter []*Hash
@@ -52,7 +52,7 @@ func (h *Hash) init() error {
 	path := h.Path
 	logp.Debug("hash", "Init hash: %s", path)
 
-	var ifiles IndexableFileSorter
+	var ifiles FileRecordSorter
 
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
@@ -65,7 +65,7 @@ func (h *Hash) init() error {
 			continue
 		}
 
-		ifile, _ := NewIndexableFile(h, file)
+		ifile, _ := NewFileRecord(h, file)
 		ifiles = append(ifiles, ifile)
 	}
 
@@ -108,25 +108,17 @@ func (h *Hash) buildDatafileIndex() {
 }
 
 func (h *Hash) buildDBIndex() {
-	var event input.Event
 	for _, file := range h.files {
 		if !strings.HasSuffix(file.Name, ".db") {
 			return
 		}
-		event = nil
 
 		if h.Type == "container" {
 			dbfile, _ := NewContainerDBfile(file)
-			dbfile.Index()
-			event = input.NewContainerEvent(dbfile.ToSwiftContainer())
+			h.IndexableQ = append(h.IndexableQ, dbfile)
 		} else if h.Type == "account" {
 			dbfile, _ := NewAccountDBfile(file)
-			dbfile.Index()
-			event = input.NewAccountEvent(dbfile.ToSwiftAccount())
-		}
-
-		if event != nil {
-			h.eventChan <- event
+			h.IndexableQ = append(h.IndexableQ, dbfile)
 		}
 	}
 }

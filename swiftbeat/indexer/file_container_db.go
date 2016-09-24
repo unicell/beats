@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/swiftbeat/input"
 	"github.com/elastic/beats/swiftbeat/input/swift"
 )
 
 type ContainerDBfile struct {
-	*IndexableFile
+	*FileRecord
 	account      string
 	container    string
 	status       string
@@ -22,13 +23,13 @@ type ContainerDBfile struct {
 
 // NewContainerDBfile returns a new ContainerDBfile object
 func NewContainerDBfile(
-	f *IndexableFile,
+	f *FileRecord,
 ) (*ContainerDBfile, error) {
 	dbfile := &ContainerDBfile{
-		IndexableFile: f,
-		object_count:  -1,
-		bytes_used:    -1,
-		policy_index:  -1,
+		FileRecord:   f,
+		object_count: -1,
+		bytes_used:   -1,
+		policy_index: -1,
 	}
 	return dbfile, nil
 }
@@ -106,4 +107,12 @@ func (f *ContainerDBfile) ToSwiftContainer() swift.Container {
 		PeerIps:      strings.Join(f.PeerIps, ","),
 	}
 	return c
+}
+
+func (f *ContainerDBfile) ToEvent() input.Event {
+	return input.NewContainerEvent(f.ToSwiftContainer())
+}
+
+func (f *ContainerDBfile) Mtime() time.Time {
+	return f.Mtime
 }

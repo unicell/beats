@@ -28,6 +28,7 @@ type Partition struct {
 	LastIndexed   time.Time
 	PartId        int64
 	ReplicaId     int64
+	IndexableQ    []IndexableFile
 }
 
 type PartitionSorter []*Partition
@@ -61,6 +62,7 @@ func NewPartition(
 		BytesTotal:    0,
 		PartId:        -1,
 		ReplicaId:     -1,
+		IndexableQ:    []IndexableFile{},
 	}
 
 	if i, err := strconv.ParseInt(part.Name, 10, 64); err == nil {
@@ -161,9 +163,23 @@ func (p *Partition) BuildIndex() {
 	p.buildSuffixIndex()
 	p.LastIndexed = time.Now()
 
-	if p.Resource.Type == "object" && p.config.EnableObjectPartitionIndex {
-		event := input.NewPartitionEvent(p.ToSwiftPartition())
-		p.eventChan <- event
+	switch p.Resource.Type {
+	case "account":
+		fallthrough
+	case "container":
+		sort.Sort(IndexableFileSorter(p.IndexableQ))
+		for _, f := range p.IndexableQ {
+			f.Index()
+			event := f.ToEvent()
+			if event != nil {
+				p.eventChan <- event
+			}
+		}
+	case "object":
+		if p.config.EnableObjectPartitionIndex {
+			event := input.NewPartitionEvent(p.ToSwiftPartition())
+			p.eventChan <- event
+		}
 	}
 }
 

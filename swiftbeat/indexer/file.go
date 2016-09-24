@@ -3,34 +3,38 @@ package indexer
 import (
 	"os"
 	"path/filepath"
+	"time"
+
+	"github.com/elastic/beats/swiftbeat/input"
 )
 
-type IndexableFile struct {
+type FileRecord struct {
 	*IndexRecord
 	*Hash
-	Size int64
+	Size        int64
+	LastIndexed time.Time
 }
 
-type IndexableFileSorter []*IndexableFile
+type FileRecordSorter []*FileRecord
 
-func (files IndexableFileSorter) Len() int {
+func (files FileRecordSorter) Len() int {
 	return len(files)
 }
 
-func (files IndexableFileSorter) Less(i, j int) bool {
+func (files FileRecordSorter) Less(i, j int) bool {
 	return files[i].Mtime.After(files[j].Mtime)
 }
 
-func (files IndexableFileSorter) Swap(i, j int) {
+func (files FileRecordSorter) Swap(i, j int) {
 	files[i], files[j] = files[j], files[i]
 }
 
-// NewIndexableFile returns a new IndexableFile object
-func NewIndexableFile(
+// NewFileRecord returns a new FileRecord object
+func NewFileRecord(
 	h *Hash,
 	file os.FileInfo,
-) (*IndexableFile, error) {
-	f := &IndexableFile{
+) (*FileRecord, error) {
+	f := &FileRecord{
 		IndexRecord: &IndexRecord{
 			Name:  file.Name(),
 			Path:  filepath.Join(h.Path, file.Name()),
@@ -40,4 +44,24 @@ func NewIndexableFile(
 		Hash: h,
 	}
 	return f, nil
+}
+
+type IndexableFile interface {
+	Index()
+	ToEvent() input.Event
+	Mtime() time.Time
+}
+
+type IndexableFileSorter []IndexableFile
+
+func (files IndexableFileSorter) Len() int {
+	return len(files)
+}
+
+func (files IndexableFileSorter) Less(i, j int) bool {
+	return files[i].Mtime().Before(files[j].Mtime())
+}
+
+func (files IndexableFileSorter) Swap(i, j int) {
+	files[i], files[j] = files[j], files[i]
 }

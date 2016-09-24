@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/swiftbeat/input"
 	"github.com/elastic/beats/swiftbeat/input/swift"
 )
 
 type AccountDBfile struct {
-	*IndexableFile
+	*FileRecord
 	account         string
 	status          string
 	container_count int64
@@ -21,10 +22,10 @@ type AccountDBfile struct {
 
 // NewAccountDBfile returns a new AccountDBfile object
 func NewAccountDBfile(
-	f *IndexableFile,
+	f *FileRecord,
 ) (*AccountDBfile, error) {
 	dbfile := &AccountDBfile{
-		IndexableFile:   f,
+		FileRecord:      f,
 		container_count: -1,
 		object_count:    -1,
 		bytes_used:      -1,
@@ -101,4 +102,12 @@ func (f *AccountDBfile) ToSwiftAccount() swift.Account {
 		PeerIps:      strings.Join(f.PeerIps, ","),
 	}
 	return a
+}
+
+func (f *AccountDBfile) ToEvent() input.Event {
+	return input.NewAccountEvent(f.ToSwiftAccount())
+}
+
+func (f *AccountDBfile) Mtime() time.Time {
+	return f.Mtime
 }
