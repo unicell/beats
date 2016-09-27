@@ -11,6 +11,7 @@ import (
 // Event represends the data generated from indexer and to be sent to the output
 type Event interface {
 	ToMapStr() common.MapStr
+	ResourceType() string
 	Bytes() int
 }
 
@@ -75,41 +76,49 @@ func (ev *ObjectEvent) Bytes() int {
 	return 1
 }
 
-type PartitionEvent struct {
-	common.EventMetadata
-	Partition swift.Partition
+func (ev *ObjectEvent) ResourceType() string {
+	return "object"
 }
 
-func NewPartitionEvent(partition swift.Partition) *PartitionEvent {
-	return &PartitionEvent{
-		Partition: partition,
+type ObjectPartitionEvent struct {
+	common.EventMetadata
+	ObjPart swift.ObjectPartition
+}
+
+func NewObjectPartitionEvent(objPart swift.ObjectPartition) *ObjectPartitionEvent {
+	return &ObjectPartitionEvent{
+		ObjPart: objPart,
 	}
 }
 
-func (ev *PartitionEvent) ToMapStr() common.MapStr {
+func (ev *ObjectPartitionEvent) ToMapStr() common.MapStr {
 	event := common.MapStr{
-		"@timestamp":     common.Time(ev.Partition.Mtime),
-		"type":           "partition",
-		"partition":      ev.Partition.PartId,
-		"num_datafiles":  ev.Partition.NumDatafiles,
-		"num_tombstones": ev.Partition.NumTombstones,
-		"bytes_total_mb": ev.Partition.BytesTotalMB,
-		"last_indexed":   common.Time(ev.Partition.LastIndexed),
-		"resource_type":  ev.Partition.ResourceType,
-		"device":         ev.Partition.Device,
-		"ip":             ev.Partition.Ip,
-		"ring_mtime":     common.Time(ev.Partition.RingMtime),
-		"handoff":        ev.Partition.Handoff,
-		"replica_id":     ev.Partition.ReplicaId,
-		"peer_devices":   ev.Partition.PeerDevices,
-		"peer_ips":       ev.Partition.PeerIps,
+		"@timestamp":     common.Time(ev.ObjPart.Mtime),
+		"type":           "obj_partition",
+		"partition":      ev.ObjPart.PartId,
+		"num_datafiles":  ev.ObjPart.NumDatafiles,
+		"num_tombstones": ev.ObjPart.NumTombstones,
+		"bytes_total_mb": ev.ObjPart.BytesTotalMB,
+		"last_indexed":   common.Time(ev.ObjPart.LastIndexed),
+		"resource_type":  ev.ObjPart.ResourceType,
+		"device":         ev.ObjPart.Device,
+		"ip":             ev.ObjPart.Ip,
+		"ring_mtime":     common.Time(ev.ObjPart.RingMtime),
+		"handoff":        ev.ObjPart.Handoff,
+		"replica_id":     ev.ObjPart.ReplicaId,
+		"peer_devices":   ev.ObjPart.PeerDevices,
+		"peer_ips":       ev.ObjPart.PeerIps,
 	}
 
 	return event
 }
 
-func (ev *PartitionEvent) Bytes() int {
+func (ev *ObjectPartitionEvent) Bytes() int {
 	return 1
+}
+
+func (ev *ObjectPartitionEvent) ResourceType() string {
+	return ev.ObjPart.ResourceType
 }
 
 type ContainerEvent struct {
@@ -138,7 +147,7 @@ func (ev *ContainerEvent) ToMapStr() common.MapStr {
 		"policy_index":  ev.Container.PolicyIndex,
 		"last_indexed":  common.Time(ev.Container.LastIndexed),
 		"resource_type": ev.Container.ResourceType,
-		"partition":     ev.Container.Partition,
+		"partition":     ev.Container.PartId,
 		"device":        ev.Container.Device,
 		"ip":            ev.Container.Ip,
 		"ring_mtime":    common.Time(ev.Container.RingMtime),
@@ -153,6 +162,10 @@ func (ev *ContainerEvent) ToMapStr() common.MapStr {
 
 func (ev *ContainerEvent) Bytes() int {
 	return 1
+}
+
+func (ev *ContainerEvent) ResourceType() string {
+	return ev.Container.ResourceType
 }
 
 type AccountEvent struct {
@@ -180,7 +193,7 @@ func (ev *AccountEvent) ToMapStr() common.MapStr {
 		"bytes_used_mb":   ev.Account.BytesUsedMB,
 		"last_indexed":    common.Time(ev.Account.LastIndexed),
 		"resource_type":   ev.Account.ResourceType,
-		"partition":       ev.Account.Partition,
+		"partition":       ev.Account.PartId,
 		"device":          ev.Account.Device,
 		"ip":              ev.Account.Ip,
 		"ring_mtime":      common.Time(ev.Account.RingMtime),
@@ -195,4 +208,8 @@ func (ev *AccountEvent) ToMapStr() common.MapStr {
 
 func (ev *AccountEvent) Bytes() int {
 	return 1
+}
+
+func (ev *AccountEvent) ResourceType() string {
+	return ev.Account.ResourceType
 }

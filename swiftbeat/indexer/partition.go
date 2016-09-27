@@ -176,10 +176,10 @@ func (p *Partition) BuildIndex() {
 			}
 		}
 	case "object":
-		if p.config.EnableObjectPartitionIndex {
-			event := input.NewPartitionEvent(p.ToSwiftPartition())
-			p.eventChan <- event
-		}
+		//if p.config.EnableObjectPartitionIndex {
+		//event := input.NewObjectPartitionEvent(p.ToSwiftObjectPartition())
+		//p.eventChan <- event
+		//}
 	}
 }
 
@@ -202,8 +202,8 @@ func (p *Partition) AnnotateSwiftObject(obj *swift.Object) {
 	obj.PeerIps = strings.Join(p.PeerIps, ",")
 }
 
-// ToSwiftPartition creates annotated swift.Partition data object for event publishing
-func (p *Partition) ToSwiftPartition() swift.Partition {
+// ToSwiftPartition creates annotated swift.ObjectPartition data object for event publishing
+func (p *Partition) ToSwiftObjectPartition() swift.ObjectPartition {
 	var bytesTotalMB int64
 	if p.BytesTotal == -1 {
 		bytesTotalMB = -1
@@ -211,22 +211,24 @@ func (p *Partition) ToSwiftPartition() swift.Partition {
 		bytesTotalMB = int64(p.BytesTotal / 1024 / 1024)
 	}
 
-	swiftPart := swift.Partition{
-		PartId:        p.PartId,
-		Mtime:         p.Mtime,
+	objPart := swift.ObjectPartition{
+		Partition: &swift.Partition{
+			PartId:      p.PartId,
+			Mtime:       p.Mtime,
+			LastIndexed: p.LastIndexed,
+			// fields inherited from parents
+			ResourceType: p.Type,
+			Device:       p.DevName,
+			Ip:           p.Ip,
+			RingMtime:    p.RingMtime,
+			Handoff:      p.Handoff,
+			ReplicaId:    p.ReplicaId,
+			PeerDevices:  strings.Join(p.PeerDevices, ","),
+			PeerIps:      strings.Join(p.PeerIps, ","),
+		},
 		NumDatafiles:  p.NumDatafiles,
 		NumTombstones: p.NumTombstones,
 		BytesTotalMB:  bytesTotalMB,
-		LastIndexed:   p.LastIndexed,
-		// fields inherited from parents
-		ResourceType: p.Type,
-		Device:       p.DevName,
-		Ip:           p.Ip,
-		RingMtime:    p.RingMtime,
-		Handoff:      p.Handoff,
-		ReplicaId:    p.ReplicaId,
-		PeerDevices:  strings.Join(p.PeerDevices, ","),
-		PeerIps:      strings.Join(p.PeerIps, ","),
 	}
-	return swiftPart
+	return objPart
 }

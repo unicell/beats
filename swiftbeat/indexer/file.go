@@ -49,7 +49,7 @@ func NewFileRecord(
 type IndexableFile interface {
 	Index()
 	ToEvent() input.Event
-	Mtime() time.Time
+	ModTime() time.Time
 }
 
 type IndexableFileSorter []IndexableFile
@@ -59,7 +59,7 @@ func (files IndexableFileSorter) Len() int {
 }
 
 func (files IndexableFileSorter) Less(i, j int) bool {
-	return files[i].Mtime().Before(files[j].Mtime())
+	return files[i].ModTime().Before(files[j].ModTime())
 }
 
 func (files IndexableFileSorter) Swap(i, j int) {

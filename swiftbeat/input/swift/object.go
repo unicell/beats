@@ -26,6 +26,13 @@ type Object struct {
 	PeerIps        string
 }
 
+type ObjectPartition struct {
+	*Partition
+	NumDatafiles  int64
+	NumTombstones int64
+	BytesTotalMB  int64
+}
+
 // Annotate copies info fields from indexer based on struct tag and reflection
 func (o *Object) Annotate(indexer interface{}) {
 

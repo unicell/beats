@@ -81,7 +81,20 @@ func (f *AccountDBfile) Index() {
 // ToSwiftAccount creates annotated swift.Account data object for event publishing
 func (f *AccountDBfile) ToSwiftAccount() swift.Account {
 	a := swift.Account{
-		Mtime:          f.Mtime,
+		Partition: &swift.Partition{
+			Mtime:       f.Mtime,
+			LastIndexed: f.LastIndexed,
+			// fields inherited from parents
+			ResourceType: f.Type,
+			PartId:       f.PartId,
+			Device:       f.DevName,
+			Ip:           f.Ip,
+			RingMtime:    f.RingMtime,
+			Handoff:      f.Handoff,
+			ReplicaId:    f.ReplicaId,
+			PeerDevices:  strings.Join(f.PeerDevices, ","),
+			PeerIps:      strings.Join(f.PeerIps, ","),
+		},
 		Path:           f.Path,
 		SizeKB:         int64(f.Size / 1024),
 		Account:        f.account,
@@ -89,17 +102,6 @@ func (f *AccountDBfile) ToSwiftAccount() swift.Account {
 		ContainerCount: f.container_count,
 		ObjectCount:    f.object_count,
 		BytesUsedMB:    int64(f.bytes_used / 1024 / 1024),
-		LastIndexed:    f.LastIndexed,
-		// fields inherited from parents
-		ResourceType: f.Type,
-		Partition:    f.PartId,
-		Device:       f.DevName,
-		Ip:           f.Ip,
-		RingMtime:    f.RingMtime,
-		Handoff:      f.Handoff,
-		ReplicaId:    f.ReplicaId,
-		PeerDevices:  strings.Join(f.PeerDevices, ","),
-		PeerIps:      strings.Join(f.PeerIps, ","),
 	}
 	return a
 }
@@ -108,6 +110,6 @@ func (f *AccountDBfile) ToEvent() input.Event {
 	return input.NewAccountEvent(f.ToSwiftAccount())
 }
 
-func (f *AccountDBfile) Mtime() time.Time {
+func (f *AccountDBfile) ModTime() time.Time {
 	return f.Mtime
 }

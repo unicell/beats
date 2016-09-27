@@ -85,7 +85,20 @@ func (f *ContainerDBfile) Index() {
 // ToSwiftContainer creates annotated swift.Container data object for event publishing
 func (f *ContainerDBfile) ToSwiftContainer() swift.Container {
 	c := swift.Container{
-		Mtime:       f.Mtime,
+		Partition: &swift.Partition{
+			Mtime:       f.Mtime,
+			LastIndexed: f.LastIndexed,
+			// fields inherited from parents
+			ResourceType: f.Type,
+			PartId:       f.PartId,
+			Device:       f.DevName,
+			Ip:           f.Ip,
+			RingMtime:    f.RingMtime,
+			Handoff:      f.Handoff,
+			ReplicaId:    f.ReplicaId,
+			PeerDevices:  strings.Join(f.PeerDevices, ","),
+			PeerIps:      strings.Join(f.PeerIps, ","),
+		},
 		Path:        f.Path,
 		SizeKB:      int64(f.Size / 1024),
 		Account:     f.account,
@@ -94,17 +107,6 @@ func (f *ContainerDBfile) ToSwiftContainer() swift.Container {
 		ObjectCount: f.object_count,
 		BytesUsedMB: int64(f.bytes_used / 1024 / 1024),
 		PolicyIndex: f.policy_index,
-		LastIndexed: f.LastIndexed,
-		// fields inherited from parents
-		ResourceType: f.Type,
-		Partition:    f.PartId,
-		Device:       f.DevName,
-		Ip:           f.Ip,
-		RingMtime:    f.RingMtime,
-		Handoff:      f.Handoff,
-		ReplicaId:    f.ReplicaId,
-		PeerDevices:  strings.Join(f.PeerDevices, ","),
-		PeerIps:      strings.Join(f.PeerIps, ","),
 	}
 	return c
 }
@@ -113,6 +115,6 @@ func (f *ContainerDBfile) ToEvent() input.Event {
 	return input.NewContainerEvent(f.ToSwiftContainer())
 }
 
-func (f *ContainerDBfile) Mtime() time.Time {
+func (f *ContainerDBfile) ModTime() time.Time {
 	return f.Mtime
 }
