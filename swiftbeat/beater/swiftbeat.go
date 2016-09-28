@@ -10,7 +10,7 @@ import (
 	"github.com/elastic/beats/swiftbeat/crawler"
 	"github.com/elastic/beats/swiftbeat/input"
 	"github.com/elastic/beats/swiftbeat/publish"
-	//"github.com/elastic/beats/filebeat/registrar"
+	"github.com/elastic/beats/swiftbeat/registrar"
 	"github.com/elastic/beats/swiftbeat/spooler"
 )
 
@@ -43,27 +43,18 @@ func (sb *Swiftbeat) Run(b *beat.Beat) error {
 	config := sb.config
 
 	// Setup registrar to persist state
-	//registrar, err := registrar.New(config.RegistryFile)
-	//if err != nil {
-	//logp.Err("Could not init registrar: %v", err)
-	//return err
-	//}
+	registrar, err := registrar.New(config.RegistryFile)
+	if err != nil {
+		logp.Err("Could not init registrar: %v", err)
+		return err
+	}
 
 	// Channel from harvesters to spooler
 	publisherChan := make(chan []input.Event, 1)
 
-	// TODO
-	registrarChan := make(chan []input.Event, 1)
-	go func() {
-		for {
-			<-registrarChan
-		}
-	}()
 	// Publishes event to output
 	publisher := publish.New(config.PublishAsync,
-		publisherChan, registrarChan, b.Publisher)
-	//publisher := publish.New(config.PublishAsync,
-	//publisherChan, registrar.Channel, b.Publisher)
+		publisherChan, registrar.Channel, b.Publisher)
 
 	// Init and Start spooler: Harvesters dump events into the spooler.
 	spooler, err := spooler.New(config, publisherChan)
@@ -83,12 +74,12 @@ func (sb *Swiftbeat) Run(b *beat.Beat) error {
 	// That means, crawler is stopped first.
 
 	// Start the registrar
-	//err = registrar.Start()
-	//if err != nil {
-	//logp.Err("Could not start registrar: %v", err)
-	//}
+	err = registrar.Start()
+	if err != nil {
+		logp.Err("Could not start registrar: %v", err)
+	}
 	// Stopping registrar will write last state
-	//defer registrar.Stop()
+	defer registrar.Stop()
 
 	// Start publisher
 	publisher.Start()
@@ -100,9 +91,7 @@ func (sb *Swiftbeat) Run(b *beat.Beat) error {
 	// Stopping spooler will flush items
 	defer spooler.Stop()
 
-	// TODO
-	//err = crawler.Start(registrar.GetStates())
-	err = crawler.Start()
+	err = crawler.Start(registrar.GetStates())
 	if err != nil {
 		return err
 	}
