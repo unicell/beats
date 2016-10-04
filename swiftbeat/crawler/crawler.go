@@ -6,7 +6,7 @@ import (
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
-	//"github.com/elastic/beats/swiftbeat/input/file"
+	"github.com/elastic/beats/swiftbeat/input"
 	"github.com/elastic/beats/swiftbeat/prospector"
 	"github.com/elastic/beats/swiftbeat/spooler"
 )
@@ -30,18 +30,14 @@ func New(spooler *spooler.Spooler, prospectorConfigs []*common.Config) (*Crawler
 	}, nil
 }
 
-// TODO
-//func (c *Crawler) Start(states file.States) error {
-func (c *Crawler) Start() error {
+func (c *Crawler) Start(states input.States) error {
 
 	logp.Info("Loading Prospectors: %v", len(c.prospectorConfigs))
 
 	// Prospect the globs/paths given on the command line and launch harvesters
 	for _, prospectorConfig := range c.prospectorConfigs {
 
-		// TODO
-		//prospector, err := prospector.NewProspector(prospectorConfig, states, c.spooler.Channel)
-		prospector, err := prospector.NewProspector(prospectorConfig, c.spooler.Channel)
+		prospector, err := prospector.NewProspector(prospectorConfig, states, c.spooler.Channel)
 		if err != nil {
 			return fmt.Errorf("Error in initing prospector: %s", err)
 		}
@@ -63,7 +59,7 @@ func (c *Crawler) Start() error {
 		}(i, p)
 	}
 
-	//logp.Info("All prospectors are initialised and running with %d states to persist", states.Count())
+	logp.Info("All prospectors are initialised and running with %d states to persist", states.Count())
 
 	return nil
 }

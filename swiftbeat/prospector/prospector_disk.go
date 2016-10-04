@@ -5,7 +5,6 @@ import (
 
 	//"github.com/elastic/beats/filebeat/harvester"
 	//"github.com/elastic/beats/filebeat/input"
-	//"github.com/elastic/beats/filebeat/input/file"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/swiftbeat/indexer"
 )
@@ -48,7 +47,7 @@ func (p *DiskProspector) Init() error {
 
 	//logp.Debug("prospector", "exclude_files: %s", p.config.ExcludeFiles)
 
-	//logp.Info("Load previous states from registry into memory")
+	logp.Info("Load previous states from registry into memory")
 	//fileStates := p.Prospector.states.GetStates()
 
 	//// Make sure all states are set as finished
@@ -61,7 +60,7 @@ func (p *DiskProspector) Init() error {
 	//p.Prospector.states.SetStates(fileStates)
 	//p.lastClean = time.Now()
 
-	//logp.Info("Previous states loaded: %v", p.Prospector.states.Count())
+	logp.Info("Previous states loaded: %v", p.Prospector.states.Count())
 	return nil
 }
 
@@ -118,19 +117,6 @@ func (p *DiskProspector) scan() {
 
 	p.disk.BuildIndex()
 	//p.disk.StartEventCollector()
-
-	go func() {
-		for {
-			select {
-			case <-p.Prospector.done:
-				logp.Info("Exiting from Disk prospector")
-				return
-			case ev := <-p.disk.GetEvents():
-				p.Prospector.spoolerChan <- ev
-			}
-
-		}
-	}()
 
 	// TODO
 	//for path, info := range p.getFiles() {

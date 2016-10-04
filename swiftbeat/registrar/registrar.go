@@ -96,16 +96,16 @@ func (r *Registrar) loadStates() error {
 	//}
 
 	// TODO
-	//decoder := json.NewDecoder(f)
-	//states := []file.State{}
-	//err = decoder.Decode(&states)
-	//if err != nil {
-	//logp.Err("Error decoding states: %s", err)
-	//return err
-	//}
+	var states map[string]*input.DiskState
+	decoder := json.NewDecoder(f)
+	err = decoder.Decode(&states)
+	if err != nil {
+		logp.Err("Error decoding states: %s", err)
+		return err
+	}
 
-	//r.states.SetStates(states)
-	//logp.Info("States Loaded from registrar: %+v", len(states))
+	r.states.SetStates(states)
+	logp.Info("States Loaded from registrar: %+v", len(states))
 
 	return nil
 }
@@ -200,6 +200,9 @@ func (r *Registrar) processEventStates(events []input.Event) {
 
 	// Take the last event found for each file source
 	for _, event := range events {
+		// TODO
+		//part := event.(*input.ContainerEvent).Container.Partition
+		//logp.Debug("hack", "33--> : %s - %s", event.ToMapStr()["path"], part.Mtime)
 		r.states.Update(event)
 	}
 }

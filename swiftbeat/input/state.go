@@ -85,8 +85,9 @@ func (s *States) Update(ev Event) {
 
 	var part *swift.Partition
 
-	evStr := ev.ToMapStr()
-	logp.Debug("hack", "11--> : %s", evStr["path"])
+	// TODO
+	//part = ev.(*ContainerEvent).Container.Partition
+	//logp.Debug("hack", "11--> : %s - %s", ev.ToMapStr()["path"], part.Mtime)
 
 	resType := ev.ResourceType()
 	switch resType {
@@ -130,12 +131,20 @@ func (s *States) Update(ev Event) {
 	}
 }
 
-// Returns a copy of the file states
-func (s *States) GetStates() map[string]DiskState {
+// Count returns number of states
+func (s *States) Count() int {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	newStates := map[string]DiskState{}
+	return len(s.states)
+}
+
+// Returns a copy of the swift states
+func (s *States) GetStates() map[string]*DiskState {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	newStates := map[string]*DiskState{}
 	for k, v := range s.states {
 		newAState := map[string]*PartitionState{}
 		for ak, av := range v.AccountState {
@@ -152,7 +161,7 @@ func (s *States) GetStates() map[string]DiskState {
 			newAState[ok] = ov
 		}
 
-		newDiskState := DiskState{
+		newDiskState := &DiskState{
 			AccountState:   newAState,
 			ContainerState: newCState,
 			ObjectState:    newOState,
@@ -161,4 +170,39 @@ func (s *States) GetStates() map[string]DiskState {
 	}
 
 	return newStates
+}
+
+// SetStates overwrites all internal states with the given states dictionary
+func (s *States) SetStates(states map[string]*DiskState) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.states = states
+}
+
+// Copy create a new copy of the states object
+func (s *States) Copy() *States {
+	states := NewStates()
+	states.states = s.GetStates()
+	return states
+}
+
+func dumpResourceStates(rs map[string]*PartitionState) {
+	logp.Debug("state", "dump stat:")
+	for k, v := range rs {
+		logp.Debug("state", "        key: %s", k)
+		logp.Debug("state", "         val: %s", v)
+	}
+}
+
+func dumpDiskStates(states map[string]*DiskState) {
+	for disk, diskState := range states {
+		logp.Debug("state", "dump disk: %s", disk)
+		dumpResourceStates(diskState.AccountState)
+		dumpResourceStates(diskState.ContainerState)
+		dumpResourceStates(diskState.ObjectState)
+	}
+}
+
+func DumpStates(states map[string]*DiskState) {
+	dumpDiskStates(states)
 }

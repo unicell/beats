@@ -6,11 +6,9 @@ import (
 	"sync"
 	"time"
 
-	//"github.com/elastic/beats/filebeat/harvester"
-	"github.com/elastic/beats/swiftbeat/input"
-	//"github.com/elastic/beats/filebeat/input/file"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/swiftbeat/input"
 )
 
 type Prospector struct {
@@ -20,8 +18,8 @@ type Prospector struct {
 	spoolerChan   chan input.Event
 	harvesterChan chan input.Event
 	done          chan struct{}
-	//states        *file.States
-	wg sync.WaitGroup
+	states        *input.States
+	wg            sync.WaitGroup
 }
 
 type Prospectorer interface {
@@ -30,16 +28,15 @@ type Prospectorer interface {
 }
 
 // TODO
-//func NewProspector(cfg *common.Config, states file.States, spoolerChan chan *input.Event) (*Prospector, error) {
-func NewProspector(cfg *common.Config, spoolerChan chan input.Event) (*Prospector, error) {
+func NewProspector(cfg *common.Config, states input.States, spoolerChan chan input.Event) (*Prospector, error) {
 	prospector := &Prospector{
 		cfg:           cfg,
 		config:        defaultConfig,
 		spoolerChan:   spoolerChan,
 		harvesterChan: make(chan input.Event),
 		done:          make(chan struct{}),
-		//states:        states.Copy(),
-		wg: sync.WaitGroup{},
+		states:        states.Copy(),
+		wg:            sync.WaitGroup{},
 	}
 
 	if err := cfg.Unpack(&prospector.config); err != nil {
