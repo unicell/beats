@@ -200,9 +200,8 @@ func (r *Registrar) processEventStates(events []input.Event) {
 
 	// Take the last event found for each file source
 	for _, event := range events {
-		// TODO
-		//part := event.(*input.ContainerEvent).Container.Partition
-		//logp.Debug("hack", "33--> : %s - %s", event.ToMapStr()["path"], part.Mtime)
+		part := event.ToPartition()
+		logp.Debug("hack", "33--> : %s - %s", event.ToMapStr()["path"], part.Mtime)
 		r.states.Update(event)
 	}
 }

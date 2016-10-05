@@ -74,8 +74,6 @@ func (f *AccountDBfile) Index() {
 	if err != nil {
 		logp.Err("sql rows iteration failed on file(%s): %v", f.Path, err)
 	}
-
-	f.LastIndexed = time.Now()
 }
 
 // ToSwiftAccount creates annotated swift.Account data object for event publishing

@@ -11,8 +11,7 @@ import (
 type FileRecord struct {
 	*IndexRecord
 	*Hash
-	Size        int64
-	LastIndexed time.Time
+	Size int64
 }
 
 type FileRecordSorter []*FileRecord

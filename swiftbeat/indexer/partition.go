@@ -161,6 +161,7 @@ func (p *Partition) BuildIndex() {
 	}
 
 	p.buildSuffixIndex()
+	// LastIndexed is shared at partition level, need to update before ToEvent()
 	p.LastIndexed = time.Now()
 
 	switch p.Resource.Type {
@@ -171,6 +172,10 @@ func (p *Partition) BuildIndex() {
 		for _, f := range p.IndexableQ {
 			f.Index()
 			event := f.ToEvent()
+
+			part := event.ToPartition()
+			logp.Debug("hack", "77--> : %s - %s", event.ToMapStr()["path"], part.Mtime)
+
 			if event != nil {
 				p.eventChan <- event
 			}

@@ -105,16 +105,23 @@ func (p *Prospector) Run() {
 				logp.Info("Prospector channel stopped")
 				return
 			case event := <-p.harvesterChan:
+
+				if !p.states.IsNewEvent(event) {
+					continue
+				}
 				//Add ttl if cleanOlder is enabled
 				//if p.config.CleanInactive > 0 {
 				//event.State.TTL = p.config.CleanInactive
 				//}
+				part := event.ToPartition()
+				logp.Debug("hack", "66--> : %s - %s", event.ToMapStr()["path"], part.Mtime)
+
 				select {
 				case <-p.done:
 					logp.Info("Prospector channel stopped")
 					return
 				case p.spoolerChan <- event:
-					//p.states.Update(event.State)
+					p.states.Update(event)
 				}
 			}
 		}

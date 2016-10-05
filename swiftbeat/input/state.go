@@ -1,6 +1,7 @@
 package input
 
 import (
+	"errors"
 	"strconv"
 	"sync"
 	"time"
@@ -9,35 +10,24 @@ import (
 	"github.com/elastic/beats/swiftbeat/input/swift"
 )
 
-type HashState struct {
-	lastSynced     time.Time
-	datafileStates []string
-}
-
-type SuffixState struct {
-	lastSynced time.Time
-	hashKeys   []string
-	hashStates map[string]HashState
-}
-
 type PartitionState struct {
-	LastSynced time.Time
-	LastMtime  time.Time
-	RingMtime  time.Time
+	LastIndexed   time.Time
+	LastMtime     time.Time
+	LastRingMtime time.Time
 }
 
 func NewPartitionState(part *swift.Partition) *PartitionState {
 	return &PartitionState{
-		LastSynced: part.LastIndexed,
-		LastMtime:  part.Mtime,
-		RingMtime:  part.RingMtime,
+		LastIndexed:   part.LastIndexed,
+		LastMtime:     part.Mtime,
+		LastRingMtime: part.RingMtime,
 	}
 }
 
 func (ps *PartitionState) update(part *swift.Partition) {
-	ps.LastSynced = part.LastIndexed
+	ps.LastIndexed = part.LastIndexed
 	ps.LastMtime = part.Mtime
-	ps.RingMtime = part.RingMtime
+	ps.LastRingMtime = part.RingMtime
 }
 
 // States represent current tracked state for one disk
@@ -55,6 +45,7 @@ func NewDiskState() *DiskState {
 	}
 }
 
+// helper function to return resource state based on resource name string
 func (ds *DiskState) getResourceState(resType string) map[string]*PartitionState {
 	switch resType {
 	case "account":
@@ -78,57 +69,129 @@ func NewStates() *States {
 	}
 }
 
-// Update updates a state. If previous state didn't exist, new one is created
-func (s *States) Update(ev Event) {
+func (s *States) findPrevious(ev Event) *PartitionState {
+	part := ev.ToPartition()
+	if diskState, ok := s.states[part.Device]; ok {
+		resType := ev.ResourceType()
+		resState := diskState.getResourceState(resType)
+
+		partId := strconv.FormatInt(part.PartId, 10)
+		if partState, ok := resState[partId]; ok {
+			return partState
+		} else {
+			return nil
+		}
+	} else {
+		return nil
+	}
+}
+
+func (s *States) FindPrevious(ev Event) *PartitionState {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	var part *swift.Partition
+	return s.findPrevious(ev)
+}
 
-	// TODO
-	//part = ev.(*ContainerEvent).Container.Partition
-	//logp.Debug("hack", "11--> : %s - %s", ev.ToMapStr()["path"], part.Mtime)
+// helper function to determine whether need to update partition state
+func isNewerThanPartState(partState *PartitionState, part *swift.Partition) bool {
 
-	resType := ev.ResourceType()
-	switch resType {
-	case "account":
-		part = ev.(*AccountEvent).Account.Partition
-	case "container":
-		part = ev.(*ContainerEvent).Container.Partition
-	case "object":
-		part = ev.(*ObjectPartitionEvent).ObjPart.Partition
+	if part.RingMtime.Unix() > partState.LastRingMtime.Unix() {
+		// side effect to purge old state happens separately
+		return true
 	}
 
-	partId := strconv.FormatInt(part.PartId, 10)
-	if diskState, ok := s.states[part.Device]; ok {
-		// existing disk state
-		resState := diskState.getResourceState(resType)
-		if partState, ok := resState[partId]; ok {
-			// existing partition state
-			if part.Mtime.Unix() >= partState.LastMtime.Unix() {
-				logp.Debug("state", "before updating: %s", partState.LastMtime)
-				partState.update(part)
-				logp.Debug("state", "part %s - persisted %s", part.Mtime, partState.LastMtime)
-			} else {
-				logp.Critical("Incoming partition %s - %s event happens before persisted %s - %s",
-					part.Mtime.Unix(), part.Mtime,
-					partState.LastMtime.Unix(), partState.LastMtime)
-			}
+	// new event if happens later than last recorded
+	if part.Mtime.Unix() > partState.LastMtime.Unix() {
+		return true
+	} else if part.Mtime.Unix() == partState.LastMtime.Unix() {
+		if part.LastIndexed.Unix() == partState.LastIndexed.Unix() {
+			// allow same timestamp event if happens within the scan loop
+			return true
+		} else if part.LastIndexed.Unix() > partState.LastIndexed.Unix() {
+			// new scan loop with the same data
+			return false
 		} else {
-			// new partition state
-			partState := NewPartitionState(part)
-			resState[partId] = partState
+			logp.Critical("lastindexed state going backward - dev %s part %d event %s persisted %s",
+				part.Device, part.PartId, part.LastIndexed, partState.LastIndexed)
 		}
 	} else {
-		// new disk state
-		diskState := NewDiskState()
-		resState := diskState.getResourceState(resType)
-
-		partState := NewPartitionState(part)
-		resState[partId] = partState
-
-		s.states[part.Device] = diskState
+		return false
 	}
+
+	return false
+}
+
+func (s *States) IsNewEvent(ev Event) bool {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	part := ev.ToPartition()
+	partState := s.findPrevious(ev)
+
+	if partState != nil {
+		return isNewerThanPartState(partState, part)
+	} else {
+		return true
+	}
+}
+
+// Update updates a state. If previous state didn't exist, new one is created
+func (s *States) Update(ev Event) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	part := ev.ToPartition()
+	logp.Debug("hack", "11--> : %s - %s", ev.ToMapStr()["path"], part.Mtime)
+	partState := s.findPrevious(ev)
+
+	// partition state found
+	if partState != nil {
+		if isNewerThanPartState(partState, part) {
+			logp.Debug("state", "update from: %s", partState.LastMtime)
+			partState.update(part)
+			logp.Debug("state", "         to: %s", partState.LastMtime)
+			return nil
+		} else {
+			logp.Critical("state going backward - dev %s part %d\n"+
+				"                     event %s, %s, %s\n"+
+				"                 persisted %s, %s, %s",
+				part.Device, part.PartId,
+				part.Mtime, part.LastIndexed, part.RingMtime,
+				partState.LastMtime, partState.LastIndexed, partState.LastRingMtime)
+			return errors.New("state update: event arrives out of order")
+		}
+	} else {
+		resType := ev.ResourceType()
+		partId := strconv.FormatInt(part.PartId, 10)
+
+		// insert new disk state
+		diskState, found := s.states[part.Device]
+		if !found {
+			diskState := NewDiskState()
+			resState := diskState.getResourceState(resType)
+
+			partState := NewPartitionState(part)
+			resState[partId] = partState
+
+			s.states[part.Device] = diskState
+			return nil
+		}
+
+		// disk state exists, inserting new partition state
+		resState := diskState.getResourceState(resType)
+		if _, found := resState[partId]; !found {
+			partState := NewPartitionState(part)
+			resState[partId] = partState
+			return nil
+		}
+
+		logp.Critical("Incoming partition %s - %s event missed in findPrevious?",
+			part.Mtime.Unix(), part.Mtime,
+		)
+	}
+
+	return errors.New("state update: unknown")
 }
 
 // Count returns number of states

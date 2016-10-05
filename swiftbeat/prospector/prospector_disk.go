@@ -20,7 +20,6 @@ type DiskProspector struct {
 	devName    string
 	devPath    string
 	disk       *indexer.Disk
-	//Indexer    *Indexer
 	//lastClean  time.Time
 }
 
@@ -47,7 +46,7 @@ func (p *DiskProspector) Init() error {
 
 	//logp.Debug("prospector", "exclude_files: %s", p.config.ExcludeFiles)
 
-	logp.Info("Load previous states from registry into memory")
+	//logp.Info("Load previous states from registry into memory")
 	//fileStates := p.Prospector.states.GetStates()
 
 	//// Make sure all states are set as finished
@@ -60,7 +59,7 @@ func (p *DiskProspector) Init() error {
 	//p.Prospector.states.SetStates(fileStates)
 	//p.lastClean = time.Now()
 
-	logp.Info("Previous states loaded: %v", p.Prospector.states.Count())
+	//logp.Info("Previous states loaded: %v", p.Prospector.states.Count())
 	return nil
 }
 

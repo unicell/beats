@@ -12,6 +12,7 @@ import (
 type Event interface {
 	ToMapStr() common.MapStr
 	ResourceType() string
+	ToPartition() *swift.Partition
 	Bytes() int
 }
 
@@ -80,6 +81,10 @@ func (ev *ObjectEvent) ResourceType() string {
 	return "object"
 }
 
+func (ev *ObjectEvent) ToPartition() *swift.Partition {
+	return nil
+}
+
 type ObjectPartitionEvent struct {
 	common.EventMetadata
 	ObjPart swift.ObjectPartition
@@ -119,6 +124,10 @@ func (ev *ObjectPartitionEvent) Bytes() int {
 
 func (ev *ObjectPartitionEvent) ResourceType() string {
 	return ev.ObjPart.ResourceType
+}
+
+func (ev *ObjectPartitionEvent) ToPartition() *swift.Partition {
+	return ev.ObjPart.Partition
 }
 
 type ContainerEvent struct {
@@ -168,6 +177,10 @@ func (ev *ContainerEvent) ResourceType() string {
 	return ev.Container.ResourceType
 }
 
+func (ev *ContainerEvent) ToPartition() *swift.Partition {
+	return ev.Container.Partition
+}
+
 type AccountEvent struct {
 	common.EventMetadata
 	Account swift.Account
@@ -212,4 +225,8 @@ func (ev *AccountEvent) Bytes() int {
 
 func (ev *AccountEvent) ResourceType() string {
 	return ev.Account.ResourceType
+}
+
+func (ev *AccountEvent) ToPartition() *swift.Partition {
+	return ev.Account.Partition
 }

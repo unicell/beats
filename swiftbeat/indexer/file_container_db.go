@@ -78,8 +78,6 @@ func (f *ContainerDBfile) Index() {
 	if err != nil {
 		logp.Err("sql rows iteration failed on file(%s): %v", f.Path, err)
 	}
-
-	f.LastIndexed = time.Now()
 }
 
 // ToSwiftContainer creates annotated swift.Container data object for event publishing
