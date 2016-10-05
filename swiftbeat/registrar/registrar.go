@@ -226,7 +226,7 @@ func (r *Registrar) writeRegistry() error {
 
 	// TODO
 	// First clean up states
-	states := r.states.GetStates()
+	states := r.states.GetStatesCopy()
 
 	encoder := json.NewEncoder(f)
 	err = encoder.Encode(states)

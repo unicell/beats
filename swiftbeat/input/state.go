@@ -24,6 +24,15 @@ func NewPartitionState(part *swift.Partition) *PartitionState {
 	}
 }
 
+func (ps *PartitionState) Copy() *PartitionState {
+	newPartState := &PartitionState{
+		LastIndexed:   ps.LastIndexed,
+		LastMtime:     ps.LastMtime,
+		LastRingMtime: ps.LastRingMtime,
+	}
+	return newPartState
+}
+
 func (ps *PartitionState) update(part *swift.Partition) {
 	ps.LastIndexed = part.LastIndexed
 	ps.LastMtime = part.Mtime
@@ -202,8 +211,8 @@ func (s *States) Count() int {
 	return len(s.states)
 }
 
-// Returns a copy of the swift states
-func (s *States) GetStates() map[string]*DiskState {
+// Returns a depcopy of the swift states
+func (s *States) GetStatesCopy() map[string]*DiskState {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -211,17 +220,17 @@ func (s *States) GetStates() map[string]*DiskState {
 	for k, v := range s.states {
 		newAState := map[string]*PartitionState{}
 		for ak, av := range v.AccountState {
-			newAState[ak] = av
+			newAState[ak] = av.Copy()
 		}
 
 		newCState := map[string]*PartitionState{}
 		for ck, cv := range v.ContainerState {
-			newCState[ck] = cv
+			newCState[ck] = cv.Copy()
 		}
 
 		newOState := map[string]*PartitionState{}
 		for ok, ov := range v.ObjectState {
-			newAState[ok] = ov
+			newAState[ok] = ov.Copy()
 		}
 
 		newDiskState := &DiskState{
@@ -244,9 +253,9 @@ func (s *States) SetStates(states map[string]*DiskState) {
 
 // Copy create a new copy of the states object
 func (s *States) Copy() *States {
-	states := NewStates()
-	states.states = s.GetStates()
-	return states
+	st := NewStates()
+	st.states = s.GetStatesCopy()
+	return st
 }
 
 func dumpResourceStates(rs map[string]*PartitionState) {
