@@ -27,7 +27,6 @@ type Prospectorer interface {
 	Run()
 }
 
-// TODO
 func NewProspector(cfg *common.Config, states input.States, spoolerChan chan input.Event) (*Prospector, error) {
 	prospector := &Prospector{
 		cfg:           cfg,
@@ -132,9 +131,6 @@ func (p *Prospector) Run() {
 		prospectorer.Run()
 	}
 
-	// TODO
-	return
-
 	for {
 		select {
 		case <-p.done:
@@ -142,7 +138,6 @@ func (p *Prospector) Run() {
 			return
 		case <-time.After(p.config.ScanFrequency):
 			logp.Debug("prospector", "Run prospector")
-			// TODO
 			for _, prospectorer := range p.prospectorers {
 				prospectorer.Run()
 			}

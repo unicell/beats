@@ -89,13 +89,6 @@ func (r *Registrar) loadStates() error {
 
 	logp.Info("Loading registrar data from %s", r.registryFile)
 
-	// DEPRECATED: This should be removed in 6.0
-	//oldStates := r.loadAndConvertOldState(f)
-	//if oldStates {
-	//return nil
-	//}
-
-	// TODO
 	var states map[string]*input.DiskState
 	decoder := json.NewDecoder(f)
 	err = decoder.Decode(&states)
@@ -109,47 +102,6 @@ func (r *Registrar) loadStates() error {
 
 	return nil
 }
-
-// loadAndConvertOldState loads the old state file and converts it to the new state
-// This is designed so it can be easily removed in later versions
-//func (r *Registrar) loadAndConvertOldState(f *os.File) bool {
-//// Make sure file reader is reset afterwards
-//defer f.Seek(0, 0)
-
-//decoder := json.NewDecoder(f)
-//oldStates := map[string]file.State{}
-//err := decoder.Decode(&oldStates)
-
-//if err != nil {
-//logp.Debug("registrar", "Error decoding old state: %+v", err)
-//return false
-//}
-
-//// No old states found -> probably already new format
-//if oldStates == nil {
-//return false
-//}
-
-//// Convert old states to new states
-//states := make([]file.State, len(oldStates))
-//logp.Info("Old registry states found: %v", len(oldStates))
-//counter := 0
-//for _, state := range oldStates {
-//// Makes timestamp time of migration, as this is the best guess
-//state.Timestamp = time.Now()
-//states[counter] = state
-//counter++
-//}
-
-//r.states.SetStates(states)
-
-//// Rewrite registry in new format
-//r.writeRegistry()
-
-//logp.Info("Old states converted to new states and written to registrar: %v", len(oldStates))
-
-//return true
-//}
 
 func (r *Registrar) Start() error {
 
@@ -190,7 +142,6 @@ func (r *Registrar) Run() {
 		//if err := r.writeRegistry(); err != nil {
 		//logp.Err("Writing of registry returned error: %v. Continuing...", err)
 		//}
-
 	}
 }
 
@@ -224,7 +175,6 @@ func (r *Registrar) writeRegistry() error {
 		return err
 	}
 
-	// TODO
 	// First clean up states
 	states := r.states.GetStatesCopy()
 
@@ -238,7 +188,6 @@ func (r *Registrar) writeRegistry() error {
 	// Directly close file because of windows
 	f.Close()
 
-	// TODO
 	logp.Debug("registrar", "Registry file updated. %d states written.", len(states))
 	statesUpdated.Add(int64(len(states)))
 	statesTotal.Set(int64(len(states)))

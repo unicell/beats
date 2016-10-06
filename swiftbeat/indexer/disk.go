@@ -91,14 +91,6 @@ func (d *Disk) BuildIndex() {
 	}
 }
 
-// TODO: handle accounts/containers as well
-// XXX: deprecated
-func (d *Disk) StartEventCollector() {
-	if d.objects != nil {
-		d.objects.StartEventCollector()
-	}
-}
-
 func (d *Disk) GetEvents() <-chan input.Event {
 	return d.eventChan
 }

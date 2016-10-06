@@ -9,7 +9,7 @@ import (
 var (
 	defaultConfig = prospectorConfig{
 		IgnoreOlder:   0,
-		ScanFrequency: 10 * time.Second,
+		ScanFrequency: 60 * time.Minute,
 		CleanInactive: 0,
 		CleanRemoved:  false,
 	}

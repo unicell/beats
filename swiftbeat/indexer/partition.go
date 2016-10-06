@@ -188,12 +188,6 @@ func (p *Partition) BuildIndex() {
 	}
 }
 
-// GetEvents returns the event channel for all partition related events
-// XXX: deprecated
-func (p *Partition) GetEvents() <-chan input.Event {
-	return p.eventChan
-}
-
 // AnnotateSwiftObject add info from indexer to the swift.Object data object
 func (p *Partition) AnnotateSwiftObject(obj *swift.Object) {
 	if p.Resource == nil {

@@ -14,7 +14,6 @@ import (
 	"github.com/openstack/swift/go/hummingbird"
 
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/elastic/beats/swiftbeat/input"
 	"github.com/elastic/beats/swiftbeat/input/swift"
 )
 
@@ -160,38 +159,6 @@ func (r *Resource) BuildIndex() {
 	for _, part := range r.partitions {
 		go part.BuildIndex()
 	}
-}
-
-// StartEventCollector pumps all events generated under the resource directory
-// through the fan-in channel
-// XXX: deprecated
-func (r *Resource) StartEventCollector() {
-
-	// Wait blocks until the resource is ready to collect events
-	r.wg.Wait()
-
-	// redirect event from individual channel to resource indexer level
-	output := func(ch <-chan input.Event) {
-		for ev := range ch {
-			select {
-			// TODO: update last tracked record
-			case r.eventChan <- ev:
-			case <-r.done:
-				logp.Info("Exiting from resource event collector")
-				return
-			}
-		}
-	}
-
-	for _, part := range r.partitions {
-		go output(part.GetEvents())
-	}
-}
-
-// GetEvents returns the event channel for all resource related events
-// XXX: deprecated
-func (r *Resource) GetEvents() <-chan input.Event {
-	return r.eventChan
 }
 
 // AnnotateSwiftObject add info from indexer to the swift.Object data object
