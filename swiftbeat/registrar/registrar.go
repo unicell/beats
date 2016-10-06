@@ -135,13 +135,9 @@ func (r *Registrar) Run() {
 			r.processEventStates(events)
 		}
 
-		// TODO
-		//beforeCount := r.states.Count()
-		//r.states.Cleanup()
-		//logp.Debug("registrar", "Registrar states cleaned up. Before: %d , After: %d", beforeCount, r.states.Count())
-		//if err := r.writeRegistry(); err != nil {
-		//logp.Err("Writing of registry returned error: %v. Continuing...", err)
-		//}
+		if err := r.writeRegistry(); err != nil {
+			logp.Err("Writing of registry returned error: %v. Continuing...", err)
+		}
 	}
 }
 

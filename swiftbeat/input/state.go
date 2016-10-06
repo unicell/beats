@@ -157,9 +157,10 @@ func (s *States) Update(ev Event) error {
 	// partition state found
 	if partState != nil {
 		if isNewerThanPartState(partState, part) {
-			logp.Debug("state", "update from: %s", partState.LastMtime)
+			logp.Debug("state", "dev %s part %d", part.Device, part.PartId)
+			logp.Debug("state", "updated from: %s", partState.LastMtime)
 			partState.update(part)
-			logp.Debug("state", "         to: %s", partState.LastMtime)
+			logp.Debug("state", "          to: %s", partState.LastMtime)
 			return nil
 		} else {
 			logp.Critical("state going backward - dev %s part %d\n"+
@@ -230,7 +231,7 @@ func (s *States) GetStatesCopy() map[string]*DiskState {
 
 		newOState := map[string]*PartitionState{}
 		for ok, ov := range v.ObjectState {
-			newAState[ok] = ov.Copy()
+			newOState[ok] = ov.Copy()
 		}
 
 		newDiskState := &DiskState{
