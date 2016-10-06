@@ -73,8 +73,8 @@ loop:
 			ticker.Stop()
 			break loop
 		case event := <-s.Channel:
-			part := event.ToPartition()
-			logp.Debug("hack", "55--> : %s - %s", event.ToMapStr()["path"], part.Mtime)
+			//part := event.ToPartition()
+			//logp.Debug("hack", "55--> : %s - %s", event.ToMapStr()["path"], part.Mtime)
 			if event != nil {
 				s.queue(event)
 			}

@@ -64,7 +64,7 @@ func (r *Resource) initRing() error {
 		return err
 	}
 
-	logp.Info("Swift hash prefix, suffix: %s %s", hashPathPrefix, hashPathSuffix)
+	logp.Debug("resource", "Swift hash prefix, suffix: %s %s", hashPathPrefix, hashPathSuffix)
 
 	// initialize ring for the resource type
 	// TODO: add multi policy support

@@ -38,7 +38,7 @@ func (p *DiskProspector) Init() error {
 }
 
 func (p *DiskProspector) Run() {
-	logp.Debug("prospector", "Start next scan")
+	logp.Info("Starting next disk scan")
 
 	p.scan()
 }

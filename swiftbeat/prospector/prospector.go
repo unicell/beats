@@ -112,8 +112,8 @@ func (p *Prospector) Run() {
 				//if p.config.CleanInactive > 0 {
 				//event.State.TTL = p.config.CleanInactive
 				//}
-				part := event.ToPartition()
-				logp.Debug("hack", "66--> : %s - %s", event.ToMapStr()["path"], part.Mtime)
+				//part := event.ToPartition()
+				//logp.Debug("hack", "66--> : %s - %s", event.ToMapStr()["path"], part.Mtime)
 
 				select {
 				case <-p.done:

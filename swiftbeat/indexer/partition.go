@@ -173,18 +173,18 @@ func (p *Partition) BuildIndex() {
 			f.Index()
 			event := f.ToEvent()
 
-			part := event.ToPartition()
-			logp.Debug("hack", "77--> : %s - %s", event.ToMapStr()["path"], part.Mtime)
+			//part := event.ToPartition()
+			//logp.Debug("hack", "77--> : %s - %s", event.ToMapStr()["path"], part.Mtime)
 
 			if event != nil {
 				p.eventChan <- event
 			}
 		}
 	case "object":
-		//if p.config.EnableObjectPartitionIndex {
-		//event := input.NewObjectPartitionEvent(p.ToSwiftObjectPartition())
-		//p.eventChan <- event
-		//}
+		if p.config.EnableObjectPartitionIndex {
+			event := input.NewObjectPartitionEvent(p.ToSwiftObjectPartition())
+			p.eventChan <- event
+		}
 	}
 }
 

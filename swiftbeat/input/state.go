@@ -151,7 +151,7 @@ func (s *States) Update(ev Event) error {
 	defer s.mutex.Unlock()
 
 	part := ev.ToPartition()
-	logp.Debug("hack", "11--> : %s - %s", ev.ToMapStr()["path"], part.Mtime)
+	//logp.Debug("hack", "11--> : %s - %s", ev.ToMapStr()["path"], part.Mtime)
 	partState := s.findPrevious(ev)
 
 	// partition state found
