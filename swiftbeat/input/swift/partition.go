@@ -8,7 +8,7 @@ import (
 type Partition struct {
 	PartId       int64
 	Mtime        time.Time
-	LastIndexed  time.Time
+	IndexedAt    time.Time
 	ResourceType string
 	Device       string
 	Ip           string

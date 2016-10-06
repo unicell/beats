@@ -25,7 +25,7 @@ type Partition struct {
 	NumDatafiles  int64
 	NumTombstones int64
 	BytesTotal    int64
-	LastIndexed   time.Time
+	IndexedAt     time.Time
 	PartId        int64
 	ReplicaId     int64
 	IndexableQ    []IndexableFile
@@ -161,8 +161,8 @@ func (p *Partition) BuildIndex() {
 	}
 
 	p.buildSuffixIndex()
-	// LastIndexed is shared at partition level, need to update before ToEvent()
-	p.LastIndexed = time.Now()
+	// IndexedAt is set at partition level, need to happen before ToEvent()
+	p.IndexedAt = time.Now()
 
 	switch p.Resource.Type {
 	case "account":
@@ -212,9 +212,9 @@ func (p *Partition) ToSwiftObjectPartition() swift.ObjectPartition {
 
 	objPart := swift.ObjectPartition{
 		Partition: &swift.Partition{
-			PartId:      p.PartId,
-			Mtime:       p.Mtime,
-			LastIndexed: p.LastIndexed,
+			PartId:    p.PartId,
+			Mtime:     p.Mtime,
+			IndexedAt: p.IndexedAt,
 			// fields inherited from parents
 			ResourceType: p.Type,
 			Device:       p.DevName,

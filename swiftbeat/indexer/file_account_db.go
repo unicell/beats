@@ -80,8 +80,8 @@ func (f *AccountDBfile) Index() {
 func (f *AccountDBfile) ToSwiftAccount() swift.Account {
 	a := swift.Account{
 		Partition: &swift.Partition{
-			Mtime:       f.Mtime,
-			LastIndexed: f.LastIndexed,
+			Mtime:     f.Mtime,
+			IndexedAt: f.IndexedAt,
 			// fields inherited from parents
 			ResourceType: f.Type,
 			PartId:       f.PartId,

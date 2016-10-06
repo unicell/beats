@@ -18,7 +18,7 @@ type PartitionState struct {
 
 func NewPartitionState(part *swift.Partition) *PartitionState {
 	return &PartitionState{
-		LastIndexed:   part.LastIndexed,
+		LastIndexed:   part.IndexedAt,
 		LastMtime:     part.Mtime,
 		LastRingMtime: part.RingMtime,
 	}
@@ -34,7 +34,7 @@ func (ps *PartitionState) Copy() *PartitionState {
 }
 
 func (ps *PartitionState) update(part *swift.Partition) {
-	ps.LastIndexed = part.LastIndexed
+	ps.LastIndexed = part.IndexedAt
 	ps.LastMtime = part.Mtime
 	ps.LastRingMtime = part.RingMtime
 }
@@ -114,15 +114,15 @@ func isNewerThanPartState(partState *PartitionState, part *swift.Partition) bool
 	if part.Mtime.Unix() > partState.LastMtime.Unix() {
 		return true
 	} else if part.Mtime.Unix() == partState.LastMtime.Unix() {
-		if part.LastIndexed.Unix() == partState.LastIndexed.Unix() {
+		if part.IndexedAt.Unix() == partState.LastIndexed.Unix() {
 			// allow same timestamp event if happens within the scan loop
 			return true
-		} else if part.LastIndexed.Unix() > partState.LastIndexed.Unix() {
+		} else if part.IndexedAt.Unix() > partState.LastIndexed.Unix() {
 			// new scan loop with the same data
 			return false
 		} else {
 			logp.Critical("lastindexed state going backward - dev %s part %d event %s persisted %s",
-				part.Device, part.PartId, part.LastIndexed, partState.LastIndexed)
+				part.Device, part.PartId, part.IndexedAt, partState.LastIndexed)
 		}
 	} else {
 		return false
@@ -167,7 +167,7 @@ func (s *States) Update(ev Event) error {
 				"                     event %s, %s, %s\n"+
 				"                 persisted %s, %s, %s",
 				part.Device, part.PartId,
-				part.Mtime, part.LastIndexed, part.RingMtime,
+				part.Mtime, part.IndexedAt, part.RingMtime,
 				partState.LastMtime, partState.LastIndexed, partState.LastRingMtime)
 			return errors.New("state update: event arrives out of order")
 		}
