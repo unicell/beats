@@ -1,6 +1,7 @@
 package indexer
 
 import (
+	"crypto/md5"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -30,6 +31,7 @@ type Resource struct {
 	DevName    string
 	DevId      int
 	Ip         string
+	RingCKSum  string
 }
 
 func NewResource(
@@ -81,6 +83,13 @@ func (r *Resource) initRing() error {
 	if f, err := os.Stat(ringPath); err == nil {
 		r.RingMtime = f.ModTime()
 	}
+
+	data, err := ioutil.ReadFile(ringPath)
+	if err != nil {
+		logp.Err("Error getting checksum for the ring: %s", ringPath)
+		return err
+	}
+	r.RingCKSum = fmt.Sprintf("%x", md5.Sum(data))
 
 	return nil
 }

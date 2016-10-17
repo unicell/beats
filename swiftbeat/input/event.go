@@ -113,6 +113,7 @@ func (ev *ObjectPartitionEvent) ToMapStr() common.MapStr {
 		"replica_id":     ev.ObjPart.ReplicaId,
 		"peer_devices":   ev.ObjPart.PeerDevices,
 		"peer_ips":       ev.ObjPart.PeerIps,
+		"ring_cksum":     ev.ObjPart.RingCKSum,
 	}
 
 	return event
@@ -164,6 +165,7 @@ func (ev *ContainerEvent) ToMapStr() common.MapStr {
 		"replica_id":    ev.Container.ReplicaId,
 		"peer_devices":  ev.Container.PeerDevices,
 		"peer_ips":      ev.Container.PeerIps,
+		"ring_cksum":    ev.Container.RingCKSum,
 	}
 
 	return event
@@ -214,6 +216,7 @@ func (ev *AccountEvent) ToMapStr() common.MapStr {
 		"replica_id":      ev.Account.ReplicaId,
 		"peer_devices":    ev.Account.PeerDevices,
 		"peer_ips":        ev.Account.PeerIps,
+		"ring_cksum":      ev.Account.RingCKSum,
 	}
 
 	return event

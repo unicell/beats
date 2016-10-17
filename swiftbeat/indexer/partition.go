@@ -224,6 +224,7 @@ func (p *Partition) ToSwiftObjectPartition() swift.ObjectPartition {
 			ReplicaId:    p.ReplicaId,
 			PeerDevices:  strings.Join(p.PeerDevices, ","),
 			PeerIps:      strings.Join(p.PeerIps, ","),
+			RingCKSum:    p.RingCKSum,
 		},
 		NumDatafiles:  p.NumDatafiles,
 		NumTombstones: p.NumTombstones,

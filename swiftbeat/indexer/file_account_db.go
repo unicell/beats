@@ -93,6 +93,7 @@ func (f *AccountDBfile) ToSwiftAccount() swift.Account {
 			ReplicaId:    f.ReplicaId,
 			PeerDevices:  strings.Join(f.PeerDevices, ","),
 			PeerIps:      strings.Join(f.PeerIps, ","),
+			RingCKSum:    f.RingCKSum,
 		},
 		Path:           f.Path,
 		SizeKB:         int64(f.Size / 1024),

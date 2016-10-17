@@ -17,4 +17,5 @@ type Partition struct {
 	ReplicaId    int64
 	PeerDevices  string
 	PeerIps      string
+	RingCKSum    string
 }
