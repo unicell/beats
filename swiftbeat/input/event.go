@@ -98,8 +98,9 @@ func NewObjectPartitionEvent(objPart swift.ObjectPartition) *ObjectPartitionEven
 
 func (ev *ObjectPartitionEvent) ToMapStr() common.MapStr {
 	event := common.MapStr{
-		"@timestamp":     common.Time(ev.ObjPart.Mtime),
+		"@timestamp":     common.Time(ev.ObjPart.IndexedAt),
 		"type":           "obj_partition",
+		"mtime":          common.Time(ev.ObjPart.Mtime),
 		"partition":      ev.ObjPart.PartId,
 		"num_datafiles":  ev.ObjPart.NumDatafiles,
 		"num_tombstones": ev.ObjPart.NumTombstones,
@@ -145,8 +146,9 @@ func NewContainerEvent(container swift.Container) *ContainerEvent {
 func (ev *ContainerEvent) ToMapStr() common.MapStr {
 
 	event := common.MapStr{
-		"@timestamp":    common.Time(ev.Container.Mtime),
+		"@timestamp":    common.Time(ev.Container.IndexedAt),
 		"type":          "db",
+		"mtime":         common.Time(ev.Container.Mtime),
 		"path":          ev.Container.Path,
 		"db_size_kb":    ev.Container.SizeKB,
 		"account":       ev.Container.Account,
@@ -197,8 +199,9 @@ func NewAccountEvent(account swift.Account) *AccountEvent {
 func (ev *AccountEvent) ToMapStr() common.MapStr {
 
 	event := common.MapStr{
-		"@timestamp":      common.Time(ev.Account.Mtime),
+		"@timestamp":      common.Time(ev.Account.IndexedAt),
 		"type":            "db",
+		"mtime":           common.Time(ev.Account.Mtime),
 		"path":            ev.Account.Path,
 		"db_size_kb":      ev.Account.SizeKB,
 		"account":         ev.Account.Account,
