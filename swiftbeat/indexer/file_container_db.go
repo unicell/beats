@@ -41,6 +41,7 @@ func (f *ContainerDBfile) Index() {
 		logp.Err("open sqlite file(%s) failed: %v", f.Path, err)
 		return
 	}
+	defer db.Close()
 
 	rows, err := db.Query(`SELECT account, container, status,
 				      reported_object_count, reported_bytes_used,
