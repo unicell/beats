@@ -3,6 +3,7 @@ package input
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/swiftbeat/input/swift"
@@ -14,6 +15,8 @@ type Event interface {
 	ResourceType() string
 	ToPartition() *swift.Partition
 	Bytes() int
+	SetTTL(time.Duration)
+	GetTTL() time.Duration
 }
 
 var knownObjectMetaKey = []string{
@@ -85,14 +88,24 @@ func (ev *ObjectEvent) ToPartition() *swift.Partition {
 	return nil
 }
 
+func (ev *ObjectEvent) GetTTL() time.Duration {
+	return -1 * time.Second
+}
+
+func (ev *ObjectEvent) SetTTL(ttl time.Duration) {
+	return
+}
+
 type ObjectPartitionEvent struct {
 	common.EventMetadata
 	ObjPart swift.ObjectPartition
+	ttl     time.Duration
 }
 
 func NewObjectPartitionEvent(objPart swift.ObjectPartition) *ObjectPartitionEvent {
 	return &ObjectPartitionEvent{
 		ObjPart: objPart,
+		ttl:     -1 * time.Second,
 	}
 }
 
@@ -132,14 +145,24 @@ func (ev *ObjectPartitionEvent) ToPartition() *swift.Partition {
 	return ev.ObjPart.Partition
 }
 
+func (ev *ObjectPartitionEvent) GetTTL() time.Duration {
+	return ev.ttl
+}
+
+func (ev *ObjectPartitionEvent) SetTTL(ttl time.Duration) {
+	ev.ttl = ttl
+}
+
 type ContainerEvent struct {
 	common.EventMetadata
 	Container swift.Container
+	ttl       time.Duration
 }
 
 func NewContainerEvent(container swift.Container) *ContainerEvent {
 	return &ContainerEvent{
 		Container: container,
+		ttl:       -1 * time.Second,
 	}
 }
 
@@ -185,14 +208,24 @@ func (ev *ContainerEvent) ToPartition() *swift.Partition {
 	return ev.Container.Partition
 }
 
+func (ev *ContainerEvent) GetTTL() time.Duration {
+	return ev.ttl
+}
+
+func (ev *ContainerEvent) SetTTL(ttl time.Duration) {
+	ev.ttl = ttl
+}
+
 type AccountEvent struct {
 	common.EventMetadata
 	Account swift.Account
+	ttl     time.Duration
 }
 
 func NewAccountEvent(account swift.Account) *AccountEvent {
 	return &AccountEvent{
 		Account: account,
+		ttl:     -1 * time.Second,
 	}
 }
 
@@ -235,4 +268,12 @@ func (ev *AccountEvent) ResourceType() string {
 
 func (ev *AccountEvent) ToPartition() *swift.Partition {
 	return ev.Account.Partition
+}
+
+func (ev *AccountEvent) GetTTL() time.Duration {
+	return ev.ttl
+}
+
+func (ev *AccountEvent) SetTTL(ttl time.Duration) {
+	ev.ttl = ttl
 }

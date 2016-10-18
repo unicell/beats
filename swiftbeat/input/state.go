@@ -34,9 +34,17 @@ func (ps *PartitionState) Copy() *PartitionState {
 }
 
 func (ps *PartitionState) update(part *swift.Partition) {
-	ps.LastIndexed = part.IndexedAt
-	ps.LastMtime = part.Mtime
-	ps.LastRingMtime = part.RingMtime
+	if part.IndexedAt.Unix() > ps.LastIndexed.Unix() {
+		ps.LastIndexed = part.IndexedAt
+	}
+
+	if part.Mtime.Unix() > ps.LastMtime.Unix() {
+		ps.LastMtime = part.Mtime
+	}
+
+	if part.RingMtime.Unix() > ps.LastRingMtime.Unix() {
+		ps.LastRingMtime = part.RingMtime
+	}
 }
 
 // States represent current tracked state for one disk
@@ -103,10 +111,16 @@ func (s *States) FindPrevious(ev Event) *PartitionState {
 }
 
 // helper function to determine whether need to update partition state
-func isNewerThanPartState(partState *PartitionState, part *swift.Partition) bool {
+func isNewerThanPartState(partState *PartitionState, part *swift.Partition, ttl time.Duration) bool {
 
 	if part.RingMtime.Unix() > partState.LastRingMtime.Unix() {
 		// side effect to purge old state happens separately
+		return true
+	}
+
+	if ttl > 0 && (part.IndexedAt.Sub(partState.LastIndexed) > ttl) {
+		logp.Debug("state", "--> LastIndexed %s IndexedAt %s TTL %s",
+			partState.LastIndexed, part.IndexedAt, ttl)
 		return true
 	}
 
@@ -139,7 +153,7 @@ func (s *States) IsNewEvent(ev Event) bool {
 	partState := s.findPrevious(ev)
 
 	if partState != nil {
-		return isNewerThanPartState(partState, part)
+		return isNewerThanPartState(partState, part, ev.GetTTL())
 	} else {
 		return true
 	}
@@ -156,7 +170,7 @@ func (s *States) Update(ev Event) error {
 
 	// partition state found
 	if partState != nil {
-		if isNewerThanPartState(partState, part) {
+		if isNewerThanPartState(partState, part, ev.GetTTL()) {
 			logp.Debug("state", "dev %s part %d", part.Device, part.PartId)
 			logp.Debug("state", "updated from: %s", partState.LastMtime)
 			partState.update(part)

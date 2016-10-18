@@ -12,6 +12,7 @@ var (
 		ScanFrequency: 60 * time.Minute,
 		CleanInactive: 0,
 		CleanRemoved:  false,
+		RescanOlder:   -1 * time.Second,
 	}
 )
 
@@ -20,6 +21,7 @@ type prospectorConfig struct {
 	IgnoreOlder   time.Duration    `config:"ignore_older"`
 	DeviceDir     string           `config:"device_dir"`
 	ScanFrequency time.Duration    `config:"scan_frequency" validate:"min=0,nonzero"`
+	RescanOlder   time.Duration    `config:"rescan_older"`
 	CleanInactive time.Duration    `config:"clean_inactive" validate:"min=0"`
 	CleanRemoved  bool             `config:"clean_removed"`
 }

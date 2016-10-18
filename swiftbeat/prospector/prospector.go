@@ -105,13 +105,15 @@ func (p *Prospector) Run() {
 				return
 			case event := <-p.harvesterChan:
 
+				// Add ttl if RescanOlder is enabled
+				if p.config.RescanOlder > 0 {
+					event.SetTTL(p.config.RescanOlder)
+				}
+
 				if !p.states.IsNewEvent(event) {
 					continue
 				}
-				//Add ttl if cleanOlder is enabled
-				//if p.config.CleanInactive > 0 {
-				//event.State.TTL = p.config.CleanInactive
-				//}
+
 				//part := event.ToPartition()
 				//logp.Debug("hack", "66--> : %s - %s", event.ToMapStr()["path"], part.Mtime)
 
