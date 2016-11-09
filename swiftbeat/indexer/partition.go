@@ -99,10 +99,8 @@ func (p *Partition) init() error {
 		}
 	}
 
-	// skip non-handoff node if ObjectIndexHandoffOnly turned on to speedup
-	if p.Resource.Type == "object" &&
-		p.config.ObjectIndexHandoffOnly && (!p.Handoff) {
-		// to differentiate non-indexed vs indexed with zero value
+	// stops at partition level to avoid heavy loads
+	if p.config.PartitionIndexOnly {
 		p.NumDatafiles = -1
 		p.NumTombstones = -1
 		p.BytesTotal = -1
@@ -132,8 +130,7 @@ func (p *Partition) init() error {
 
 func (p *Partition) buildSuffixIndex() {
 	// only index suffix dirs when needed
-	if p.Resource.Type == "object" &&
-		p.config.ObjectIndexHandoffOnly && (!p.Handoff) {
+	if p.config.PartitionIndexOnly {
 		return
 	}
 
