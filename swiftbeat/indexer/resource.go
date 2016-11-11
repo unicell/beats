@@ -70,7 +70,7 @@ func (r *Resource) initRing() error {
 
 	// initialize ring for the resource type
 	// TODO: add multi policy support
-	ring, err := hummingbird.GetRing(r.Type, hashPathPrefix, hashPathSuffix, 0)
+	ring, err := hummingbird.GetRingSnapshot(r.Type, hashPathPrefix, hashPathSuffix, 0)
 	if err != nil {
 		logp.Err("Error reading the %s ring", r.Type)
 		return err

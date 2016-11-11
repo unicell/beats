@@ -45,13 +45,41 @@
 			"revisionTime": "2016-09-07T16:20:43Z"
 		},
 		{
-			"checksumSHA1": "7NA4JORxDKOuLTl0WI/vgTd52z4=",
-			"path": "github.com/openstack/swift",
-			"revision": "1ab2a296f58ae76aeffef9f3f0fb90e15358be27",
-			"revisionTime": "2016-08-30T16:59:45Z",
+			"path": "github.com/openstack/swift/go/bench",
+			"revision": ""
+		},
+		{
+			"path": "github.com/openstack/swift/go/client",
+			"revision": ""
+		},
+		{
+			"path": "github.com/openstack/swift/go/hummingbird",
+			"revision": ""
+		},
+		{
+			"path": "github.com/openstack/swift/go/middleware",
+			"revision": ""
+		},
+		{
+			"path": "github.com/openstack/swift/go/objectserver",
+			"revision": ""
+		},
+		{
+			"path": "github.com/openstack/swift/go/proxyserver",
+			"revision": ""
+		},
+		{
+			"path": "github.com/openstack/swift/go/xattr",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "UyV2kt/TBJ0xterIrEVSDWfhiXU=",
+			"path": "github.com/unicell/swift",
+			"revision": "63e898a2d20ffa028ccd8e4907897be5ab3097bb",
+			"revisionTime": "2016-11-10T23:39:52Z",
 			"tree": true,
-			"version": "feature/hummingbird",
-			"versionExact": "feature/hummingbird"
+			"version": "hummingbird-for-swiftbeat",
+			"versionExact": "hummingbird-for-swiftbeat"
 		},
 		{
 			"checksumSHA1": "CdFUSTEB5KTYNpSH47vQqUcflVM=",
