@@ -3,6 +3,7 @@ package prospector
 import (
 	"io/ioutil"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -139,6 +140,8 @@ func (p *Prospector) Run() {
 			logp.Info("Prospector ticker stopped")
 			return
 		case <-time.After(p.config.ScanFrequency):
+			// force GC and return memory to OS to keep low mem profile
+			debug.FreeOSMemory()
 			logp.Debug("prospector", "Run prospector")
 			for _, prospectorer := range p.prospectorers {
 				prospectorer.Run()
